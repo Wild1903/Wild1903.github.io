@@ -284,5 +284,76 @@
         });
     });
   </script>
+  <!-- Navigation clavier ZQSD -->
+  <script>
+    const keyMap = {
+      'z': '#section-home',
+      'q': '#section-about',
+      's': '#section-xp',
+      'd': '#section-contact'
+    };
+
+    // Indicateur visuel
+    const indicator = document.createElement('div');
+    indicator.id = 'kbd-indicator';
+    indicator.style.cssText = `
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(20,5,31,0.95);
+      border: 1px solid rgba(168,85,247,0.5);
+      border-radius: 999px;
+      padding: 10px 24px;
+      font-family: var(--font-mono, monospace);
+      font-size: 0.85rem;
+      color: #a855f7;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      z-index: 9999;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(168,85,247,0.3);
+      pointer-events: none;
+    `;
+    indicator.innerHTML = `
+      <span><kbd style="background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.5);border-radius:6px;padding:2px 8px;color:#f472b6">Z</kbd> Accueil</span>
+      <span><kbd style="background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.5);border-radius:6px;padding:2px 8px;color:#f472b6">Q</kbd> Profil</span>
+      <span><kbd style="background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.5);border-radius:6px;padding:2px 8px;color:#f472b6">S</kbd> XP</span>
+      <span><kbd style="background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.5);border-radius:6px;padding:2px 8px;color:#f472b6">D</kbd> Contact</span>
+    `;
+    document.body.appendChild(indicator);
+
+    let hideTimer;
+    function showIndicator() {
+      indicator.style.opacity = '1';
+      indicator.style.transform = 'translateX(-50%) translateY(0)';
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => {
+        indicator.style.opacity = '0';
+        indicator.style.transform = 'translateX(-50%) translateY(20px)';
+      }, 2000);
+    }
+
+    // Afficher l'indicateur au démarrage
+    setTimeout(showIndicator, 1500);
+
+    document.addEventListener('keydown', (e) => {
+      // Ne pas intercepter si l'utilisateur tape dans un champ
+      if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+      const key = e.key.toLowerCase();
+      if (keyMap[key]) {
+        e.preventDefault();
+        const target = document.querySelector(keyMap[key]);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+          showIndicator();
+        }
+      }
+    });
+  </script>
 </body>
 </html>;
