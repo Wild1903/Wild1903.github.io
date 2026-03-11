@@ -34,8 +34,8 @@
 </head>
 <body>
 
-  <!-- FOND VIDÉO -->
-  <video id="bg-video" autoplay muted loop playsinline><source src="fond_porte_folio.mp4" type="video/mp4"></video>
+  <!-- FOND IMAGE -->
+  <div id="bg-image"></div>
 
   <!-- SCÈNE 3D APPLE-STYLE (Three.js) -->
   <canvas id="cyber-canvas"></canvas>
@@ -436,18 +436,26 @@
       ctx.clearRect(0, 0, W, H);
       drawConnections(particles);
       particles.forEach(p => { p.update(); p.draw(); });
+      if (window.__drawOrbitals) window.__drawOrbitals();
       requestAnimationFrame(loop);
     }
     loop();
   })();
   </script>
 
-  <!-- ANIMATIONS D'APPARITION AU SCROLL -->
+  <!-- ANIMATIONS D'APPARITION + RE-APPARITION PAR SECTION -->
   <style>
+    #bg-image {
+      position: fixed;
+      inset: 0;
+      background: url('fond_portefolio.jpg') center center / cover no-repeat;
+      z-index: -3;
+      filter: brightness(0.35);
+    }
     .reveal {
       opacity: 0;
       transform: translateY(40px);
-      transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1);
+      transition: opacity 0.75s cubic-bezier(0.22,1,0.36,1), transform 0.75s cubic-bezier(0.22,1,0.36,1);
     }
     .reveal.visible {
       opacity: 1;
@@ -455,18 +463,100 @@
     }
   </style>
   <script>
-    document.querySelectorAll('.card, .status-card, .terminal-mini, .hero-text, .hero-side, .section h2').forEach((el, i) => {
+    // === RE-ANIMATION À CHAQUE ENTRÉE/SORTIE DE SECTION ===
+    const revealEls = document.querySelectorAll('.card, .status-card, .terminal-mini, .hero-text, .hero-side, .section h2');
+    revealEls.forEach((el, i) => {
       el.classList.add('reveal');
-      el.style.transitionDelay = (i % 4) * 0.1 + 's';
+      el.style.transitionDelay = (i % 5) * 0.08 + 's';
     });
 
-    const observer = new IntersectionObserver((entries) => {
+    const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach(e => {
-        if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+        } else {
+          // Re-reset quand l'élément quitte l'écran → ré-animera au retour
+          e.target.classList.remove('visible');
+        }
       });
-    }, { threshold: 0.12 });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    revealEls.forEach(el => revealObserver.observe(el));
+  </script>
+
+  <!-- PARTICULES ORBITALES AUTOUR DE LA SOURIS -->
+  <script>
+  (function() {
+    const canvas = document.getElementById('ps-canvas');
+    const ctx = canvas.getContext('2d');
+    // Activer les pointer events pour le canvas orbital
+    canvas.style.pointerEvents = 'none';
+
+    const COLORS = ['#a855f7','#c084fc','#f472b6','#e879f9','#d946ef'];
+    const ORBIT_COUNT = 18;
+    let mouse = { x: -999, y: -999 };
+    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+    class OrbitalParticle {
+      constructor(i) {
+        this.i = i;
+        this.angle = (i / ORBIT_COUNT) * Math.PI * 2;
+        this.radius = 40 + (i % 3) * 22;
+        this.speed = 0.018 + (i % 4) * 0.006;
+        this.size = 1.5 + Math.random() * 2;
+        this.color = COLORS[i % COLORS.length];
+        this.alpha = 0.5 + Math.random() * 0.5;
+        this.trail = [];
+        this.trailLen = 14 + Math.floor(Math.random() * 10);
+        // Smooth target position
+        this.cx = -999; this.cy = -999;
+        this.tx = -999; this.ty = -999;
+      }
+      update() {
+        this.angle += this.speed;
+        // Smooth follow mouse
+        if (this.cx === -999) { this.cx = mouse.x; this.cy = mouse.y; }
+        this.cx += (mouse.x - this.cx) * 0.08;
+        this.cy += (mouse.y - this.cy) * 0.08;
+
+        const x = this.cx + Math.cos(this.angle + this.i * 0.3) * this.radius;
+        const y = this.cy + Math.sin(this.angle + this.i * 0.3) * (this.radius * 0.55);
+
+        this.trail.unshift({ x, y });
+        if (this.trail.length > this.trailLen) this.trail.pop();
+        this.x = x; this.y = y;
+      }
+      draw() {
+        for (let t = 0; t < this.trail.length; t++) {
+          const ratio = 1 - t / this.trail.length;
+          ctx.beginPath();
+          ctx.arc(this.trail[t].x, this.trail[t].y, this.size * ratio * 0.8, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.globalAlpha = this.alpha * ratio * 0.4;
+          ctx.fill();
+        }
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.alpha;
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = this.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    const orbits = Array.from({ length: ORBIT_COUNT }, (_, i) => new OrbitalParticle(i));
+
+    // Hook into existing loop — just add orbital draw on top
+    const origLoop = window.__psLoop;
+    function drawOrbitals() {
+      orbits.forEach(p => { p.update(); p.draw(); });
+    }
+    // Expose for the main loop to call
+    window.__drawOrbitals = drawOrbitals;
+  })();
   </script>
 </body>
 </html>
