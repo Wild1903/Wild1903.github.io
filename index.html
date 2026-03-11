@@ -30,6 +30,7 @@
     .t-yellow { color: #fbbf24; }
     .t-dim    { color: #6b7280; }
     .t-arrow  { color: #a855f7; margin-right: 4px; }
+    .t-orange { color: #fb923c; }
   </style>
 
   <!-- EmailJS -->
@@ -58,37 +59,65 @@
         <span class="terminal-title">dorian@portfolio — ~/init.sh</span>
       </div>
       <div class="terminal-body">
-        <p class="line t-dim">Initialisation du système… <span class="t-ok">[OK]</span></p>
+        <p class="line"><span class="t-dim">[ </span><span class="t-ok">BOOT</span><span class="t-dim"> ]</span> Kernel <span class="t-cyan">portfolio-os v2.4.1</span> — <span class="t-yellow">arch: x86_64</span></p>
+        <p class="line t-dim">──────────────────────────────────────────</p>
         <p class="line">
           <span class="prompt">dorian@portfolio:~$</span>
           <span id="boot-command" class="typed"></span><span class="cursor" id="boot-cursor"></span>
         </p>
-        <p class="line hidden" id="boot-line-2"><span class="t-arrow">→</span> Résolution des dépendances… <span class="t-ok">[OK]</span></p>
+        <p class="line hidden" id="boot-line-2">
+          <span class="t-ok">✔</span> Résolution des dépendances… 
+          <span class="t-cyan">3</span> paquets • <span class="t-yellow">0</span> conflits • <span class="t-ok">[OK]</span>
+        </p>
         <p class="line hidden" id="boot-line-pkg">
-          <span class="t-dim">Paquets :</span>
-          <span class="t-cyan"> cybersec-skills</span>
-          <span class="t-pink"> linux-admin</span>
+          <span class="t-dim">  installing:</span>
+          <span class="t-cyan"> cybersec-skills@2.1</span>
+          <span class="t-pink"> linux-admin@5.4</span>
           <span class="t-purple"> python3-dev</span>
           <span class="t-yellow"> bash-scripts</span>
-          <span class="t-ok"> javascript</span>
+          <span class="t-orange"> C++</span>
+          <span class="t-ok"> js-es2024</span>
         </p>
         <div class="progress-container hidden" id="boot-progress">
           <div class="progress-bar" id="progress-bar"></div>
         </div>
         <p class="line hidden" id="boot-line-profile">
-          <span class="t-arrow">→</span> Chargement <span class="t-cyan">profil.json</span>… 
-          <span class="t-dim">CEO @ Vatier</span> · <span class="t-pink">Ingetis BTS CIEL</span> · <span class="t-ok">[OK]</span>
+          <span class="t-ok">✔</span> <span class="t-cyan">profil.json</span> 
+          <span class="t-dim">›</span> <span class="t-pink">Dorian Lemiere</span>
+          <span class="t-dim">›</span> <span class="t-yellow">Paris, FR</span>
+          <span class="t-dim">›</span> <span class="t-purple">CEO @ Vatier</span>
+          <span class="t-dim">›</span> <span class="t-orange">Ingetis BTS CIEL</span>
+          <span class="t-ok"> [OK]</span>
         </p>
         <p class="line hidden" id="boot-line-xp">
-          <span class="t-arrow">→</span> Chargement <span class="t-purple">experience.db</span>… 
-          <span class="t-dim">5 entrées trouvées</span> · <span class="t-ok">[OK]</span>
+          <span class="t-ok">✔</span> <span class="t-purple">experience.db</span>
+          <span class="t-dim"> ›</span> <span class="t-cyan">5 entrées</span>
+          <span class="t-dim"> · hôtellerie</span>
+          <span class="t-pink"> · événementiel</span>
+          <span class="t-yellow"> · restauration</span>
+          <span class="t-orange"> · animation</span>
+          <span class="t-ok"> [OK]</span>
         </p>
         <p class="line hidden" id="boot-line-projects">
-          <span class="t-arrow">→</span> Scan <span class="t-yellow">github://Wild1903</span>… 
-          <span class="t-pink">Vatier</span> · <span class="t-cyan">portfolio</span> · <span class="t-ok">[OK]</span>
+          <span class="t-ok">✔</span> <span class="t-yellow">github://Wild1903</span>
+          <span class="t-dim"> ›</span> <span class="t-pink">Vatier</span>
+          <span class="t-dim"> ·</span> <span class="t-cyan">portfolio</span>
+          <span class="t-dim"> ·</span> <span class="t-purple">cybersec-labs</span>
+          <span class="t-ok"> [OK]</span>
+        </p>
+        <p class="line hidden" id="boot-line-skills">
+          <span class="t-ok">✔</span> <span class="t-orange">skills.map</span>
+          <span class="t-dim"> ›</span> <span class="t-cyan">réseaux</span>
+          <span class="t-dim"> ·</span> <span class="t-pink">sécurité</span>
+          <span class="t-dim"> ·</span> <span class="t-yellow">Windows/Linux</span>
+          <span class="t-dim"> ·</span> <span class="t-purple">PowerShell</span>
+          <span class="t-ok"> [OK]</span>
         </p>
         <p class="line hidden" id="boot-line-3">
-          <span class="t-ok">✓</span> Installation terminée. <span class="t-purple">Lancement du portfolio…</span>
+          <span class="t-dim">──────────────────────────────────────────</span>
+        </p>
+        <p class="line hidden" id="boot-line-4">
+          <span class="t-ok">✓ Tous les modules chargés.</span> <span class="t-purple">Lancement du portfolio</span><span class="t-cyan">…</span>
         </p>
       </div>
     </div>
@@ -97,7 +126,7 @@
   <!-- PAGE PORTFOLIO COMPLÈTE -->
   <div id="portfolio" class="hidden">
     <header class="main-header">
-      <div class="logo">D.</div>
+      <div class="logo">D.L</div>
       <nav>
         <a href="#section-home" class="nav-kbd"><kbd>Z</kbd> Accueil</a>
         <a href="#section-about" class="nav-kbd"><kbd>Q</kbd> Profil</a>
@@ -491,10 +520,12 @@
       }
     }
 
-    // Connexions entre proches
+    // Connexions entre particules libres uniquement (pas les orbitales)
     function drawConnections(pts) {
       for (let i = 0; i < pts.length; i++) {
+        if (pts[i].orbit) continue; // pas de traits depuis les orbitales
         for (let j = i+1; j < pts.length; j++) {
+          if (pts[j].orbit) continue; // pas de traits vers les orbitales
           const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
           const d  = Math.sqrt(dx*dx + dy*dy);
           if (d < 90) {
@@ -502,7 +533,7 @@
             ctx.moveTo(pts[i].x, pts[i].y);
             ctx.lineTo(pts[j].x, pts[j].y);
             ctx.strokeStyle = pts[i].color;
-            ctx.globalAlpha = (1 - d/90) * (pts[i].orbit || pts[j].orbit ? 0.22 : 0.08);
+            ctx.globalAlpha = (1 - d/90) * 0.08;
             ctx.lineWidth = 0.7;
             ctx.stroke();
             ctx.globalAlpha = 1;
