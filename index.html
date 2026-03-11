@@ -22,6 +22,14 @@
       border-color: #a855f7;
       box-shadow: 0 2px 0 rgba(168,85,247,0.6), 0 0 12px rgba(168,85,247,0.4);
     }
+    /* Terminal couleurs */
+    .t-ok     { color: #4ade80; font-weight: 600; }
+    .t-cyan   { color: #22d3ee; }
+    .t-pink   { color: #f472b6; }
+    .t-purple { color: #c084fc; }
+    .t-yellow { color: #fbbf24; }
+    .t-dim    { color: #6b7280; }
+    .t-arrow  { color: #a855f7; margin-right: 4px; }
   </style>
 
   <!-- EmailJS -->
@@ -38,7 +46,7 @@
   <div id="bg-image"></div>
 
   <!-- SCÈNE 3D APPLE-STYLE (Three.js) -->
-  <canvas id="cyber-canvas"></canvas>
+  <canvas id="cyber-canvas" style="position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.55;mix-blend-mode:screen;"></canvas>
 
   <!-- ÉCRAN BOOT TERMINAL -->
   <div id="boot-screen">
@@ -47,22 +55,40 @@
         <span class="dot red"></span>
         <span class="dot yellow"></span>
         <span class="dot green"></span>
-        <span class="terminal-title">~/terminal</span>
+        <span class="terminal-title">dorian@portfolio — ~/init.sh</span>
       </div>
       <div class="terminal-body">
+        <p class="line t-dim">Initialisation du système… <span class="t-ok">[OK]</span></p>
         <p class="line">
           <span class="prompt">dorian@portfolio:~$</span>
-          <span id="boot-command" class="typed"></span>
-          <span class="cursor" id="boot-cursor"></span>
+          <span id="boot-command" class="typed"></span><span class="cursor" id="boot-cursor"></span>
         </p>
-        <p class="line hidden" id="boot-line-2">
-          Lecture des dépendances…  <span class="progress-label">(sudo apt embauche lemiere-dorian)</span>
+        <p class="line hidden" id="boot-line-2"><span class="t-arrow">→</span> Résolution des dépendances… <span class="t-ok">[OK]</span></p>
+        <p class="line hidden" id="boot-line-pkg">
+          <span class="t-dim">Paquets :</span>
+          <span class="t-cyan"> cybersec-skills</span>
+          <span class="t-pink"> linux-admin</span>
+          <span class="t-purple"> python3-dev</span>
+          <span class="t-yellow"> bash-scripts</span>
+          <span class="t-ok"> javascript</span>
         </p>
         <div class="progress-container hidden" id="boot-progress">
           <div class="progress-bar" id="progress-bar"></div>
         </div>
+        <p class="line hidden" id="boot-line-profile">
+          <span class="t-arrow">→</span> Chargement <span class="t-cyan">profil.json</span>… 
+          <span class="t-dim">CEO @ Vatier</span> · <span class="t-pink">Ingetis BTS CIEL</span> · <span class="t-ok">[OK]</span>
+        </p>
+        <p class="line hidden" id="boot-line-xp">
+          <span class="t-arrow">→</span> Chargement <span class="t-purple">experience.db</span>… 
+          <span class="t-dim">5 entrées trouvées</span> · <span class="t-ok">[OK]</span>
+        </p>
+        <p class="line hidden" id="boot-line-projects">
+          <span class="t-arrow">→</span> Scan <span class="t-yellow">github://Wild1903</span>… 
+          <span class="t-pink">Vatier</span> · <span class="t-cyan">portfolio</span> · <span class="t-ok">[OK]</span>
+        </p>
         <p class="line hidden" id="boot-line-3">
-          Installation terminée. Lancement du portfolio…
+          <span class="t-ok">✓</span> Installation terminée. <span class="t-purple">Lancement du portfolio…</span>
         </p>
       </div>
     </div>
@@ -315,175 +341,117 @@
   </script>
 
   <!-- PARTICULES INTERACTIVES STYLE PS -->
-  <canvas id="ps-canvas" style="position:fixed;inset:0;z-index:1;pointer-events:none;width:100%;height:100%;"></canvas>
+  <canvas id="ps-canvas" style="position:fixed;inset:0;z-index:2;pointer-events:none;width:100%;height:100%;"></canvas>
   <script>
   (function() {
     const canvas = document.getElementById('ps-canvas');
-    const ctx = canvas.getContext('2d');
-    let W = canvas.width = window.innerWidth;
+    const ctx    = canvas.getContext('2d');
+    let W = canvas.width  = window.innerWidth;
     let H = canvas.height = window.innerHeight;
-    let mouse = { x: W/2, y: H/2, active: false };
+    const mouse = { x: W/2, y: H/2, active: false };
 
     window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
     window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; });
 
-    const COLORS = ['#a855f7','#c084fc','#f472b6','#e879f9','#7c3aed','#db2777'];
-    const MAX_ATTRACTED = 40; // max particules attirées simultanément
+    const COLORS  = ['#a855f7','#c084fc','#f472b6','#e879f9','#7c3aed','#db2777'];
+    const MAX_ORB = 10; // max orbitales simultanées
 
-    // ── PARTICULES DE FOND (PS-style, dérivent vers le haut) ──────────────────
+    // ── PARTICULE DE FOND (dérive vers le haut, peut être capturée) ─────────
     class BgParticle {
-      constructor(init) {
-        this.reset(init);
-      }
+      constructor(init) { this.orbit = false; this.orbitAngle = 0; this.orbitR = 0; this.cx = 0; this.cy = 0; this.fadeIn = 0; this.reset(init); }
       reset(init) {
-        this.x = Math.random() * W;
-        this.y = init ? Math.random() * H : H + 10;
-        this.vx = (Math.random() - 0.5) * 0.35;
-        this.vy = -(Math.random() * 0.45 + 0.1);
+        this.x    = Math.random() * W;
+        this.y    = init ? Math.random() * H : H + 10;
+        this.vx   = (Math.random() - 0.5) * 0.35;
+        this.vy   = -(Math.random() * 0.45 + 0.1);
         this.size = Math.random() * 2.2 + 0.6;
-        this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
-        this.alpha = Math.random() * 0.5 + 0.15;
-        this.life = 0;
-        this.maxLife = Math.random() * 500 + 200;
-        this.trail = [];
-        this.trailLen = Math.floor(Math.random() * 16 + 5);
-        this.attracted = false;
-        this.attractAlpha = 0; // fade in/out attraction state
+        this.color= COLORS[Math.floor(Math.random() * COLORS.length)];
+        this.alpha= Math.random() * 0.5 + 0.2;
+        this.life = 0; this.maxLife = Math.random() * 500 + 200;
+        this.trail= []; this.trailLen = Math.floor(Math.random() * 16 + 5);
+        this.orbit = false; this.fadeIn = 0;
       }
       update() {
-        const dx = mouse.x - this.x;
-        const dy = mouse.y - this.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        const attractRadius = 180;
-
-        if (dist < attractRadius && mouse.active) {
-          // Attraction douce vers la souris
-          const force = (1 - dist / attractRadius) * 0.04;
-          this.vx += (dx / dist) * force * dist * 0.012;
-          this.vy += (dy / dist) * force * dist * 0.012;
-          this.attracted = true;
-          this.attractAlpha = Math.min(this.attractAlpha + 0.05, 1);
+        if (this.orbit) {
+          // Orbitale : tourne autour de la souris
+          this.orbitAngle += this.orbitSpeed;
+          // Centre suit la souris rapidement
+          this.cx += (mouse.x - this.cx) * 0.18;
+          this.cy += (mouse.y - this.cy) * 0.18;
+          this.x = this.cx + Math.cos(this.orbitAngle) * this.orbitR;
+          this.y = this.cy + Math.sin(this.orbitAngle) * (this.orbitR * 0.52);
+          this.fadeIn = Math.min(this.fadeIn + 0.04, 1);
+          this.life++;
+          if (this.life > this.maxOrbitLife) { this.orbit = false; this.reset(false); }
         } else {
-          this.attracted = false;
-          this.attractAlpha = Math.max(this.attractAlpha - 0.03, 0);
-          // Dérive naturelle vers le haut
-          this.vy -= 0.006;
+          // Dérive libre
+          const dx = mouse.x - this.x;
+          const dy = mouse.y - this.y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          const captureR = 160;
+          if (dist < captureR && mouse.active && orbitCount() < MAX_ORB) {
+            // Capture → devient orbitale
+            this.orbit     = true;
+            this.orbitAngle= Math.atan2(this.y - mouse.y, this.x - mouse.x);
+            this.orbitR    = 38 + Math.random() * 55;
+            this.orbitSpeed= (0.022 + Math.random() * 0.018) * (Math.random() < 0.5 ? 1 : -1);
+            this.cx = mouse.x; this.cy = mouse.y;
+            this.life = 0;
+            this.maxOrbitLife = 260 + Math.random() * 180;
+            this.fadeIn = 0;
+          } else if (dist < captureR && mouse.active) {
+            // Attirée même si pas capturée
+            const force = (1 - dist / captureR) * 0.06;
+            this.vx += (dx / dist) * force * 2.5;
+            this.vy += (dy / dist) * force * 2.5;
+          } else {
+            this.vy -= 0.006;
+          }
+          this.vx *= 0.96; this.vy *= 0.96;
+          this.x += this.vx; this.y += this.vy;
+          this.life++;
+          if (this.x < -20) this.x = W + 20;
+          if (this.x > W + 20) this.x = -20;
+          if (this.y < -40 || this.life > this.maxLife) this.reset(false);
         }
-
-        // Friction légère
-        this.vx *= 0.96;
-        this.vy *= 0.96;
-
         this.trail.unshift({ x: this.x, y: this.y });
         if (this.trail.length > this.trailLen) this.trail.pop();
-
-        this.x += this.vx;
-        this.y += this.vy;
-        this.life++;
-
-        if (this.x < -20) this.x = W + 20;
-        if (this.x > W + 20) this.x = -20;
-        if (this.y < -40 || this.life > this.maxLife) this.reset(false);
       }
       draw() {
-        const glowBoost = this.attractAlpha;
+        const a = this.orbit ? this.alpha * this.fadeIn : this.alpha;
         for (let t = 0; t < this.trail.length; t++) {
-          const ratio = 1 - t / this.trail.length;
+          const r = 1 - t / this.trail.length;
           ctx.beginPath();
-          ctx.arc(this.trail[t].x, this.trail[t].y, this.size * ratio * 0.7, 0, Math.PI*2);
+          ctx.arc(this.trail[t].x, this.trail[t].y, this.size * r * 0.7, 0, Math.PI*2);
           ctx.fillStyle = this.color;
-          ctx.globalAlpha = (this.alpha + glowBoost * 0.3) * ratio * 0.35;
+          ctx.globalAlpha = a * r * (this.orbit ? 0.5 : 0.3);
           ctx.fill();
         }
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size + glowBoost * 1.5, 0, Math.PI*2);
-        ctx.fillStyle = this.color;
-        ctx.globalAlpha = this.alpha + glowBoost * 0.4;
-        ctx.shadowBlur = 8 + glowBoost * 20;
-        ctx.shadowColor = this.color;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    // ── PARTICULES ORBITALES autour de la souris (pool limité) ─────────────────
-    class OrbitalParticle {
-      constructor(i, total) {
-        this.angle = (i / total) * Math.PI * 2;
-        this.orbitRadius = 35 + (i % 4) * 18;
-        this.speed = 0.022 + (i % 5) * 0.005;
-        this.size = 1.8 + (i % 3) * 0.8;
-        this.color = COLORS[i % COLORS.length];
-        this.alpha = 0.7 + (i % 3) * 0.1;
-        this.cx = mouse.x; this.cy = mouse.y;
-        this.trail = [];
-        this.trailLen = 12 + (i % 8);
-        this.life = 0;
-        this.maxLife = 280 + Math.random() * 200; // durée de vie limitée
-        this.born = false;
-        this.fadeIn = 0;
-        this.dying = false;
-        this.fadeOut = 1;
-      }
-      update() {
-        this.life++;
-        // Fade in
-        if (this.fadeIn < 1) this.fadeIn = Math.min(this.fadeIn + 0.04, 1);
-        // Fade out en fin de vie
-        if (this.life > this.maxLife - 40) {
-          this.dying = true;
-          this.fadeOut = Math.max(this.fadeOut - 0.025, 0);
-        }
-
-        this.angle += this.speed;
-        // Smooth follow souris
-        this.cx += (mouse.x - this.cx) * 0.1;
-        this.cy += (mouse.y - this.cy) * 0.1;
-
-        const x = this.cx + Math.cos(this.angle) * this.orbitRadius;
-        const y = this.cy + Math.sin(this.angle) * (this.orbitRadius * 0.52);
-
-        this.trail.unshift({ x, y });
-        if (this.trail.length > this.trailLen) this.trail.pop();
-        this.x = x; this.y = y;
-      }
-      isDead() { return this.life > this.maxLife; }
-      draw() {
-        const a = this.alpha * this.fadeIn * this.fadeOut;
-        for (let t = 0; t < this.trail.length; t++) {
-          const ratio = 1 - t / this.trail.length;
-          ctx.beginPath();
-          ctx.arc(this.trail[t].x, this.trail[t].y, this.size * ratio * 0.7, 0, Math.PI*2);
-          ctx.fillStyle = this.color;
-          ctx.globalAlpha = a * ratio * 0.45;
-          ctx.fill();
-        }
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+        ctx.arc(this.x, this.y, this.size + (this.orbit ? 1 : 0), 0, Math.PI*2);
         ctx.fillStyle = this.color;
         ctx.globalAlpha = a;
-        ctx.shadowBlur = 18;
+        ctx.shadowBlur = this.orbit ? 20 : 8;
         ctx.shadowColor = this.color;
         ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0; ctx.globalAlpha = 1;
       }
     }
 
-    // ── CONNEXIONS entre particules proches ───────────────────────────────────
+    function orbitCount() { return bgParticles.filter(p => p.orbit).length; }
+
+    // Connexions entre proches
     function drawConnections(pts) {
       for (let i = 0; i < pts.length; i++) {
         for (let j = i+1; j < pts.length; j++) {
-          const dx = pts[i].x - pts[j].x;
-          const dy = pts[i].y - pts[j].y;
-          const d = Math.sqrt(dx*dx + dy*dy);
+          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+          const d  = Math.sqrt(dx*dx + dy*dy);
           if (d < 85) {
             ctx.beginPath();
             ctx.moveTo(pts[i].x, pts[i].y);
             ctx.lineTo(pts[j].x, pts[j].y);
             ctx.strokeStyle = pts[i].color;
-            ctx.globalAlpha = (1 - d/85) * 0.1;
+            ctx.globalAlpha = (1 - d/85) * (pts[i].orbit || pts[j].orbit ? 0.2 : 0.09);
             ctx.lineWidth = 0.7;
             ctx.stroke();
             ctx.globalAlpha = 1;
@@ -492,57 +460,30 @@
       }
     }
 
-    // ── POOL ORBITAL avec limite MAX_ATTRACTED ────────────────────────────────
-    let orbitals = [];
-    let spawnTimer = 0;
-
-    function spawnOrbital() {
-      // Si on dépasse la limite, forcer la mort des plus vieilles
-      while (orbitals.length >= MAX_ATTRACTED) {
-        orbitals[0].maxLife = orbitals[0].life + 40; // force fade out rapide
-        // Retirer les mortes
-        orbitals = orbitals.filter(o => !o.isDead());
-        if (orbitals.length >= MAX_ATTRACTED) break;
-      }
-      orbitals.push(new OrbitalParticle(orbitals.length % 20, 20));
-    }
-
-    const bgParticles = Array.from({ length: 110 }, (_, i) => new BgParticle(true));
+    const bgParticles = Array.from({ length: 100 }, (_, i) => new BgParticle(true));
 
     function loop() {
       ctx.clearRect(0, 0, W, H);
-
-      // Spawn orbitales progressivement
-      spawnTimer++;
-      if (mouse.active && spawnTimer % 8 === 0 && orbitals.length < MAX_ATTRACTED) {
-        spawnOrbital();
-      }
-
-      // Update + nettoyage orbitales mortes
-      orbitals = orbitals.filter(o => !o.isDead());
-      orbitals.forEach(o => o.update());
-
       drawConnections(bgParticles);
       bgParticles.forEach(p => { p.update(); p.draw(); });
-
-      // Dessiner les orbitales par-dessus
-      orbitals.forEach(o => o.draw());
-
       requestAnimationFrame(loop);
     }
     loop();
   })();
   </script>
 
+
   <!-- ANIMATIONS D'APPARITION + RE-APPARITION PAR SECTION -->
   <style>
     #bg-image {
       position: fixed;
       inset: 0;
-      background: url('fond_portefolio.jpg') center center / cover no-repeat,
-                  url('fond_porte_folio.jpg') center center / cover no-repeat;
-      z-index: -3;
-      filter: brightness(0.32) saturate(1.2);
+      background-image: url('fond_portefolio.jpg');
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      z-index: -2;
+      filter: brightness(0.38) saturate(1.3);
     }
     .reveal {
       opacity: 0;
@@ -576,79 +517,7 @@
     revealEls.forEach(el => revealObserver.observe(el));
   </script>
 
-  <!-- PARTICULES ORBITALES AUTOUR DE LA SOURIS -->
-  <script>
-  (function() {
-    const canvas = document.getElementById('ps-canvas');
-    const ctx = canvas.getContext('2d');
-    // Activer les pointer events pour le canvas orbital
-    canvas.style.pointerEvents = 'none';
-
-    const COLORS = ['#a855f7','#c084fc','#f472b6','#e879f9','#d946ef'];
-    const ORBIT_COUNT = 18;
-    let mouse = { x: -999, y: -999 };
-    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
-
-    class OrbitalParticle {
-      constructor(i) {
-        this.i = i;
-        this.angle = (i / ORBIT_COUNT) * Math.PI * 2;
-        this.radius = 40 + (i % 3) * 22;
-        this.speed = 0.018 + (i % 4) * 0.006;
-        this.size = 1.5 + Math.random() * 2;
-        this.color = COLORS[i % COLORS.length];
-        this.alpha = 0.5 + Math.random() * 0.5;
-        this.trail = [];
-        this.trailLen = 14 + Math.floor(Math.random() * 10);
-        // Smooth target position
-        this.cx = -999; this.cy = -999;
-        this.tx = -999; this.ty = -999;
-      }
-      update() {
-        this.angle += this.speed;
-        // Smooth follow mouse
-        if (this.cx === -999) { this.cx = mouse.x; this.cy = mouse.y; }
-        this.cx += (mouse.x - this.cx) * 0.08;
-        this.cy += (mouse.y - this.cy) * 0.08;
-
-        const x = this.cx + Math.cos(this.angle + this.i * 0.3) * this.radius;
-        const y = this.cy + Math.sin(this.angle + this.i * 0.3) * (this.radius * 0.55);
-
-        this.trail.unshift({ x, y });
-        if (this.trail.length > this.trailLen) this.trail.pop();
-        this.x = x; this.y = y;
-      }
-      draw() {
-        for (let t = 0; t < this.trail.length; t++) {
-          const ratio = 1 - t / this.trail.length;
-          ctx.beginPath();
-          ctx.arc(this.trail[t].x, this.trail[t].y, this.size * ratio * 0.8, 0, Math.PI * 2);
-          ctx.fillStyle = this.color;
-          ctx.globalAlpha = this.alpha * ratio * 0.4;
-          ctx.fill();
-        }
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.globalAlpha = this.alpha;
-        ctx.shadowBlur = 16;
-        ctx.shadowColor = this.color;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    const orbits = Array.from({ length: ORBIT_COUNT }, (_, i) => new OrbitalParticle(i));
-
-    // Hook into existing loop — just add orbital draw on top
-    const origLoop = window.__psLoop;
-    function drawOrbitals() {
-      orbits.forEach(p => { p.update(); p.draw(); });
-    }
-    // Expose for the main loop to call
-    window.__drawOrbitals = drawOrbitals;
-  })();
-  </script>
+</body>
+</html>
 </body>
 </html>
