@@ -303,74 +303,170 @@
   </script>
   <!-- Navigation clavier ZQSD -->
   <script>
-    const keyMap = {
-      'z': '#section-home',
-      'q': '#section-about',
-      's': '#section-xp',
-      'd': '#section-contact'
-    };
-
-    // Indicateur visuel
-    const indicator = document.createElement('div');
-    indicator.id = 'kbd-indicator';
-    indicator.style.cssText = `
-      position: fixed;
-      bottom: 32px;
-      left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: rgba(20,5,31,0.95);
-      border: 1px solid rgba(168,85,247,0.5);
-      border-radius: 999px;
-      padding: 10px 24px;
-      font-family: var(--font-mono, monospace);
-      font-size: 0.85rem;
-      color: #a855f7;
-      display: flex;
-      gap: 20px;
-      align-items: center;
-      opacity: 0;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      z-index: 9999;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 8px 32px rgba(168,85,247,0.3);
-      pointer-events: none;
-    `;
-    indicator.innerHTML = `
-      <span><kbd style="background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.5);border-radius:6px;padding:2px 8px;color:#f472b6">Z</kbd> Accueil</span>
-      <span><kbd style="background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.5);border-radius:6px;padding:2px 8px;color:#f472b6">Q</kbd> Profil</span>
-      <span><kbd style="background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.5);border-radius:6px;padding:2px 8px;color:#f472b6">S</kbd> XP</span>
-      <span><kbd style="background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.5);border-radius:6px;padding:2px 8px;color:#f472b6">D</kbd> Contact</span>
-    `;
-    document.body.appendChild(indicator);
-
-    let hideTimer;
-    function showIndicator() {
-      indicator.style.opacity = '1';
-      indicator.style.transform = 'translateX(-50%) translateY(0)';
-      clearTimeout(hideTimer);
-      hideTimer = setTimeout(() => {
-        indicator.style.opacity = '0';
-        indicator.style.transform = 'translateX(-50%) translateY(20px)';
-      }, 2000);
-    }
-
-    // Afficher l'indicateur au démarrage
-    setTimeout(showIndicator, 1500);
-
+    const keyMap = { 'z':'#section-home','q':'#section-about','s':'#section-xp','d':'#section-contact' };
     document.addEventListener('keydown', (e) => {
-      // Ne pas intercepter si l'utilisateur tape dans un champ
       if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
-
       const key = e.key.toLowerCase();
       if (keyMap[key]) {
         e.preventDefault();
-        const target = document.querySelector(keyMap[key]);
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth' });
-          showIndicator();
-        }
+        document.querySelector(keyMap[key])?.scrollIntoView({ behavior: 'smooth' });
       }
     });
   </script>
+
+  <!-- PARTICULES INTERACTIVES STYLE PS -->
+  <canvas id="ps-canvas" style="position:fixed;inset:0;z-index:0;pointer-events:none;width:100%;height:100%;"></canvas>
+  <script>
+  (function() {
+    const canvas = document.getElementById('ps-canvas');
+    const ctx = canvas.getContext('2d');
+    let W = canvas.width = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    let mouse = { x: W / 2, y: H / 2 };
+
+    window.addEventListener('resize', () => {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    });
+    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+    const COLORS = ['#a855f7','#c084fc','#f472b6','#e879f9','#7c3aed','#db2777'];
+    const COUNT = 120;
+
+    class Particle {
+      constructor(i) {
+        this.index = i;
+        this.reset(true);
+      }
+      reset(init) {
+        this.x = Math.random() * W;
+        this.y = init ? Math.random() * H : H + 10;
+        this.baseX = this.x;
+        this.baseY = this.y;
+        this.vx = (Math.random() - 0.5) * 0.4;
+        this.vy = -(Math.random() * 0.5 + 0.15);
+        this.size = Math.random() * 2.5 + 0.8;
+        this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        this.alpha = Math.random() * 0.6 + 0.2;
+        this.life = 0;
+        this.maxLife = Math.random() * 400 + 200;
+        // trail
+        this.trail = [];
+        this.trailLen = Math.floor(Math.random() * 18 + 6);
+      }
+      update() {
+        // Mouse repulsion
+        const dx = this.x - mouse.x;
+        const dy = this.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const repelRadius = 130;
+        if (dist < repelRadius) {
+          const force = (repelRadius - dist) / repelRadius;
+          this.vx += (dx / dist) * force * 1.8;
+          this.vy += (dy / dist) * force * 1.8;
+        }
+
+        // Damping
+        this.vx *= 0.97;
+        this.vy *= 0.97;
+        // Drift up
+        this.vy -= 0.008;
+
+        this.trail.unshift({ x: this.x, y: this.y });
+        if (this.trail.length > this.trailLen) this.trail.pop();
+
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life++;
+
+        // Wrap horizontally
+        if (this.x < -20) this.x = W + 20;
+        if (this.x > W + 20) this.x = -20;
+
+        if (this.y < -40 || this.life > this.maxLife) this.reset(false);
+      }
+      draw() {
+        // Draw trail
+        for (let t = 0; t < this.trail.length; t++) {
+          const ratio = 1 - t / this.trail.length;
+          ctx.beginPath();
+          ctx.arc(this.trail[t].x, this.trail[t].y, this.size * ratio * 0.7, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.globalAlpha = this.alpha * ratio * 0.35;
+          ctx.fill();
+        }
+        // Draw particle
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.alpha;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = this.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // Connection lines between close particles (PS-style web)
+    function drawConnections(particles) {
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const d = Math.sqrt(dx*dx + dy*dy);
+          if (d < 90) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            const alpha = (1 - d / 90) * 0.12;
+            ctx.strokeStyle = particles[i].color;
+            ctx.globalAlpha = alpha;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          }
+        }
+      }
+    }
+
+    const particles = Array.from({ length: COUNT }, (_, i) => new Particle(i));
+
+    function loop() {
+      ctx.clearRect(0, 0, W, H);
+      drawConnections(particles);
+      particles.forEach(p => { p.update(); p.draw(); });
+      requestAnimationFrame(loop);
+    }
+    loop();
+  })();
+  </script>
+
+  <!-- ANIMATIONS D'APPARITION AU SCROLL -->
+  <style>
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+  <script>
+    document.querySelectorAll('.card, .status-card, .terminal-mini, .hero-text, .hero-side, .section h2').forEach((el, i) => {
+      el.classList.add('reveal');
+      el.style.transitionDelay = (i % 4) * 0.1 + 's';
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
 </body>
-</html>;
+</html>
