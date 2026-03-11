@@ -315,62 +315,64 @@
   </script>
 
   <!-- PARTICULES INTERACTIVES STYLE PS -->
-  <canvas id="ps-canvas" style="position:fixed;inset:0;z-index:0;pointer-events:none;width:100%;height:100%;"></canvas>
+  <canvas id="ps-canvas" style="position:fixed;inset:0;z-index:1;pointer-events:none;width:100%;height:100%;"></canvas>
   <script>
   (function() {
     const canvas = document.getElementById('ps-canvas');
     const ctx = canvas.getContext('2d');
     let W = canvas.width = window.innerWidth;
     let H = canvas.height = window.innerHeight;
-    let mouse = { x: W / 2, y: H / 2 };
+    let mouse = { x: W/2, y: H/2, active: false };
 
-    window.addEventListener('resize', () => {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-    });
-    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
+    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; });
 
     const COLORS = ['#a855f7','#c084fc','#f472b6','#e879f9','#7c3aed','#db2777'];
-    const COUNT = 120;
+    const MAX_ATTRACTED = 40; // max particules attirées simultanément
 
-    class Particle {
-      constructor(i) {
-        this.index = i;
-        this.reset(true);
+    // ── PARTICULES DE FOND (PS-style, dérivent vers le haut) ──────────────────
+    class BgParticle {
+      constructor(init) {
+        this.reset(init);
       }
       reset(init) {
         this.x = Math.random() * W;
         this.y = init ? Math.random() * H : H + 10;
-        this.baseX = this.x;
-        this.baseY = this.y;
-        this.vx = (Math.random() - 0.5) * 0.4;
-        this.vy = -(Math.random() * 0.5 + 0.15);
-        this.size = Math.random() * 2.5 + 0.8;
+        this.vx = (Math.random() - 0.5) * 0.35;
+        this.vy = -(Math.random() * 0.45 + 0.1);
+        this.size = Math.random() * 2.2 + 0.6;
         this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
-        this.alpha = Math.random() * 0.6 + 0.2;
+        this.alpha = Math.random() * 0.5 + 0.15;
         this.life = 0;
-        this.maxLife = Math.random() * 400 + 200;
-        // trail
+        this.maxLife = Math.random() * 500 + 200;
         this.trail = [];
-        this.trailLen = Math.floor(Math.random() * 18 + 6);
+        this.trailLen = Math.floor(Math.random() * 16 + 5);
+        this.attracted = false;
+        this.attractAlpha = 0; // fade in/out attraction state
       }
       update() {
-        // Mouse repulsion
-        const dx = this.x - mouse.x;
-        const dy = this.y - mouse.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const repelRadius = 130;
-        if (dist < repelRadius) {
-          const force = (repelRadius - dist) / repelRadius;
-          this.vx += (dx / dist) * force * 1.8;
-          this.vy += (dy / dist) * force * 1.8;
+        const dx = mouse.x - this.x;
+        const dy = mouse.y - this.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const attractRadius = 180;
+
+        if (dist < attractRadius && mouse.active) {
+          // Attraction douce vers la souris
+          const force = (1 - dist / attractRadius) * 0.04;
+          this.vx += (dx / dist) * force * dist * 0.012;
+          this.vy += (dy / dist) * force * dist * 0.012;
+          this.attracted = true;
+          this.attractAlpha = Math.min(this.attractAlpha + 0.05, 1);
+        } else {
+          this.attracted = false;
+          this.attractAlpha = Math.max(this.attractAlpha - 0.03, 0);
+          // Dérive naturelle vers le haut
+          this.vy -= 0.006;
         }
 
-        // Damping
-        this.vx *= 0.97;
-        this.vy *= 0.97;
-        // Drift up
-        this.vy -= 0.008;
+        // Friction légère
+        this.vx *= 0.96;
+        this.vy *= 0.96;
 
         this.trail.unshift({ x: this.x, y: this.y });
         if (this.trail.length > this.trailLen) this.trail.pop();
@@ -379,28 +381,25 @@
         this.y += this.vy;
         this.life++;
 
-        // Wrap horizontally
         if (this.x < -20) this.x = W + 20;
         if (this.x > W + 20) this.x = -20;
-
         if (this.y < -40 || this.life > this.maxLife) this.reset(false);
       }
       draw() {
-        // Draw trail
+        const glowBoost = this.attractAlpha;
         for (let t = 0; t < this.trail.length; t++) {
           const ratio = 1 - t / this.trail.length;
           ctx.beginPath();
-          ctx.arc(this.trail[t].x, this.trail[t].y, this.size * ratio * 0.7, 0, Math.PI * 2);
+          ctx.arc(this.trail[t].x, this.trail[t].y, this.size * ratio * 0.7, 0, Math.PI*2);
           ctx.fillStyle = this.color;
-          ctx.globalAlpha = this.alpha * ratio * 0.35;
+          ctx.globalAlpha = (this.alpha + glowBoost * 0.3) * ratio * 0.35;
           ctx.fill();
         }
-        // Draw particle
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.size + glowBoost * 1.5, 0, Math.PI*2);
         ctx.fillStyle = this.color;
-        ctx.globalAlpha = this.alpha;
-        ctx.shadowBlur = 12;
+        ctx.globalAlpha = this.alpha + glowBoost * 0.4;
+        ctx.shadowBlur = 8 + glowBoost * 20;
         ctx.shadowColor = this.color;
         ctx.fill();
         ctx.shadowBlur = 0;
@@ -408,21 +407,84 @@
       }
     }
 
-    // Connection lines between close particles (PS-style web)
-    function drawConnections(particles) {
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
+    // ── PARTICULES ORBITALES autour de la souris (pool limité) ─────────────────
+    class OrbitalParticle {
+      constructor(i, total) {
+        this.angle = (i / total) * Math.PI * 2;
+        this.orbitRadius = 35 + (i % 4) * 18;
+        this.speed = 0.022 + (i % 5) * 0.005;
+        this.size = 1.8 + (i % 3) * 0.8;
+        this.color = COLORS[i % COLORS.length];
+        this.alpha = 0.7 + (i % 3) * 0.1;
+        this.cx = mouse.x; this.cy = mouse.y;
+        this.trail = [];
+        this.trailLen = 12 + (i % 8);
+        this.life = 0;
+        this.maxLife = 280 + Math.random() * 200; // durée de vie limitée
+        this.born = false;
+        this.fadeIn = 0;
+        this.dying = false;
+        this.fadeOut = 1;
+      }
+      update() {
+        this.life++;
+        // Fade in
+        if (this.fadeIn < 1) this.fadeIn = Math.min(this.fadeIn + 0.04, 1);
+        // Fade out en fin de vie
+        if (this.life > this.maxLife - 40) {
+          this.dying = true;
+          this.fadeOut = Math.max(this.fadeOut - 0.025, 0);
+        }
+
+        this.angle += this.speed;
+        // Smooth follow souris
+        this.cx += (mouse.x - this.cx) * 0.1;
+        this.cy += (mouse.y - this.cy) * 0.1;
+
+        const x = this.cx + Math.cos(this.angle) * this.orbitRadius;
+        const y = this.cy + Math.sin(this.angle) * (this.orbitRadius * 0.52);
+
+        this.trail.unshift({ x, y });
+        if (this.trail.length > this.trailLen) this.trail.pop();
+        this.x = x; this.y = y;
+      }
+      isDead() { return this.life > this.maxLife; }
+      draw() {
+        const a = this.alpha * this.fadeIn * this.fadeOut;
+        for (let t = 0; t < this.trail.length; t++) {
+          const ratio = 1 - t / this.trail.length;
+          ctx.beginPath();
+          ctx.arc(this.trail[t].x, this.trail[t].y, this.size * ratio * 0.7, 0, Math.PI*2);
+          ctx.fillStyle = this.color;
+          ctx.globalAlpha = a * ratio * 0.45;
+          ctx.fill();
+        }
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = a;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = this.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // ── CONNEXIONS entre particules proches ───────────────────────────────────
+    function drawConnections(pts) {
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i+1; j < pts.length; j++) {
+          const dx = pts[i].x - pts[j].x;
+          const dy = pts[i].y - pts[j].y;
           const d = Math.sqrt(dx*dx + dy*dy);
-          if (d < 90) {
+          if (d < 85) {
             ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            const alpha = (1 - d / 90) * 0.12;
-            ctx.strokeStyle = particles[i].color;
-            ctx.globalAlpha = alpha;
-            ctx.lineWidth = 0.8;
+            ctx.moveTo(pts[i].x, pts[i].y);
+            ctx.lineTo(pts[j].x, pts[j].y);
+            ctx.strokeStyle = pts[i].color;
+            ctx.globalAlpha = (1 - d/85) * 0.1;
+            ctx.lineWidth = 0.7;
             ctx.stroke();
             ctx.globalAlpha = 1;
           }
@@ -430,13 +492,42 @@
       }
     }
 
-    const particles = Array.from({ length: COUNT }, (_, i) => new Particle(i));
+    // ── POOL ORBITAL avec limite MAX_ATTRACTED ────────────────────────────────
+    let orbitals = [];
+    let spawnTimer = 0;
+
+    function spawnOrbital() {
+      // Si on dépasse la limite, forcer la mort des plus vieilles
+      while (orbitals.length >= MAX_ATTRACTED) {
+        orbitals[0].maxLife = orbitals[0].life + 40; // force fade out rapide
+        // Retirer les mortes
+        orbitals = orbitals.filter(o => !o.isDead());
+        if (orbitals.length >= MAX_ATTRACTED) break;
+      }
+      orbitals.push(new OrbitalParticle(orbitals.length % 20, 20));
+    }
+
+    const bgParticles = Array.from({ length: 110 }, (_, i) => new BgParticle(true));
 
     function loop() {
       ctx.clearRect(0, 0, W, H);
-      drawConnections(particles);
-      particles.forEach(p => { p.update(); p.draw(); });
-      if (window.__drawOrbitals) window.__drawOrbitals();
+
+      // Spawn orbitales progressivement
+      spawnTimer++;
+      if (mouse.active && spawnTimer % 8 === 0 && orbitals.length < MAX_ATTRACTED) {
+        spawnOrbital();
+      }
+
+      // Update + nettoyage orbitales mortes
+      orbitals = orbitals.filter(o => !o.isDead());
+      orbitals.forEach(o => o.update());
+
+      drawConnections(bgParticles);
+      bgParticles.forEach(p => { p.update(); p.draw(); });
+
+      // Dessiner les orbitales par-dessus
+      orbitals.forEach(o => o.draw());
+
       requestAnimationFrame(loop);
     }
     loop();
@@ -448,9 +539,10 @@
     #bg-image {
       position: fixed;
       inset: 0;
-      background: url('fond_portefolio.jpg') center center / cover no-repeat;
+      background: url('fond_portefolio.jpg') center center / cover no-repeat,
+                  url('fond_porte_folio.jpg') center center / cover no-repeat;
       z-index: -3;
-      filter: brightness(0.35);
+      filter: brightness(0.32) saturate(1.2);
     }
     .reveal {
       opacity: 0;
