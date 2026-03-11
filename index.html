@@ -316,7 +316,7 @@
     </main>
 
     <footer class="main-footer">
-      <p>© <span id="year"></span> Dorian Lemiere – Portfolio</p>
+      <p>© <span id="year"></span> Dorian Lemiere – Portfolio terminal style</p>
     </footer>
   </div>
 
@@ -611,4 +611,14 @@
     const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach(e => {
         if (e.isIntersecting) {
-          e.target.classLis
+          e.target.classList.add('visible');
+        } else {
+          e.target.classList.remove('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    revealEls.forEach(el => revealObserver.observe(el));
+  </script>
+</body>
+</html>
