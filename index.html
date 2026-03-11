@@ -46,7 +46,7 @@
   <div id="bg-image"></div>
 
   <!-- SCÈNE 3D APPLE-STYLE (Three.js) -->
-  <canvas id="cyber-canvas" style="position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.55;mix-blend-mode:screen;"></canvas>
+  <canvas id="cyber-canvas" ></canvas>
 
   <!-- ÉCRAN BOOT TERMINAL -->
   <div id="boot-screen">
@@ -350,95 +350,146 @@
     let H = canvas.height = window.innerHeight;
     const mouse = { x: W/2, y: H/2, active: false };
 
-    window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
+    window.addEventListener('resize', () => {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    });
     window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; });
 
     const COLORS  = ['#a855f7','#c084fc','#f472b6','#e879f9','#7c3aed','#db2777'];
-    const MAX_ORB = 10; // max orbitales simultanées
+    const MAX_ORB = 20;   // max orbitales simultanées
+    const COUNT   = 140;  // particules de fond couvrant tout l'écran
 
-    // ── PARTICULE DE FOND (dérive vers le haut, peut être capturée) ─────────
     class BgParticle {
-      constructor(init) { this.orbit = false; this.orbitAngle = 0; this.orbitR = 0; this.cx = 0; this.cy = 0; this.fadeIn = 0; this.reset(init); }
+      constructor(init) {
+        this.orbit = false;
+        this.orbitAngle = 0; this.orbitR = 0;
+        this.cx = 0; this.cy = 0;
+        this.fadeOut = 1; // pour fade-out forcé si dépassement
+        this.dying  = false;
+        this.reset(init);
+      }
+
       reset(init) {
+        // Spawn réparti sur toute la surface
         this.x    = Math.random() * W;
         this.y    = init ? Math.random() * H : H + 10;
-        this.vx   = (Math.random() - 0.5) * 0.35;
-        this.vy   = -(Math.random() * 0.45 + 0.1);
-        this.size = Math.random() * 2.2 + 0.6;
+        this.vx   = (Math.random() - 0.5) * 0.4;
+        this.vy   = -(Math.random() * 0.5 + 0.08);
+        this.size = Math.random() * 2.4 + 0.7;
         this.color= COLORS[Math.floor(Math.random() * COLORS.length)];
-        this.alpha= Math.random() * 0.5 + 0.2;
-        this.life = 0; this.maxLife = Math.random() * 500 + 200;
-        this.trail= []; this.trailLen = Math.floor(Math.random() * 16 + 5);
-        this.orbit = false; this.fadeIn = 0;
+        this.alpha= Math.random() * 0.55 + 0.2;
+        this.life = 0;
+        this.maxLife  = Math.random() * 600 + 250;
+        this.trail    = [];
+        this.trailLen = Math.floor(Math.random() * 18 + 5);
+        this.orbit  = false;
+        this.dying  = false;
+        this.fadeOut= 1;
+        this.fadeIn = 0;
       }
+
+      // Appelé quand on doit libérer une place d'orbite
+      forceRelease() {
+        this.dying = true;
+        // Elle va finir son fade-out puis reset en particule libre
+      }
+
       update() {
+        if (this.dying) {
+          this.fadeOut = Math.max(this.fadeOut - 0.04, 0);
+          if (this.fadeOut <= 0) {
+            this.orbit = false;
+            this.reset(false);
+          }
+          // Même en dying, elle continue à orbiter jusqu'à disparition
+          if (this.orbit) {
+            this.orbitAngle += this.orbitSpeed;
+            this.cx += (mouse.x - this.cx) * 0.18;
+            this.cy += (mouse.y - this.cy) * 0.18;
+            this.x = this.cx + Math.cos(this.orbitAngle) * this.orbitR;
+            this.y = this.cy + Math.sin(this.orbitAngle) * (this.orbitR * 0.52);
+          }
+          this.trail.unshift({ x: this.x, y: this.y });
+          if (this.trail.length > this.trailLen) this.trail.pop();
+          return;
+        }
+
         if (this.orbit) {
-          // Orbitale : tourne autour de la souris
           this.orbitAngle += this.orbitSpeed;
-          // Centre suit la souris rapidement
+          // Suivi rapide de la souris (attraction forte)
           this.cx += (mouse.x - this.cx) * 0.18;
           this.cy += (mouse.y - this.cy) * 0.18;
           this.x = this.cx + Math.cos(this.orbitAngle) * this.orbitR;
           this.y = this.cy + Math.sin(this.orbitAngle) * (this.orbitR * 0.52);
-          this.fadeIn = Math.min(this.fadeIn + 0.04, 1);
+          this.fadeIn = Math.min(this.fadeIn + 0.05, 1);
           this.life++;
-          if (this.life > this.maxOrbitLife) { this.orbit = false; this.reset(false); }
+          // Durée de vie orbitale naturelle : ne meurt QUE si remplacée
         } else {
-          // Dérive libre
-          const dx = mouse.x - this.x;
-          const dy = mouse.y - this.y;
+          const dx   = mouse.x - this.x;
+          const dy   = mouse.y - this.y;
           const dist = Math.sqrt(dx*dx + dy*dy);
-          const captureR = 160;
-          if (dist < captureR && mouse.active && orbitCount() < MAX_ORB) {
-            // Capture → devient orbitale
-            this.orbit     = true;
-            this.orbitAngle= Math.atan2(this.y - mouse.y, this.x - mouse.x);
-            this.orbitR    = 38 + Math.random() * 55;
-            this.orbitSpeed= (0.022 + Math.random() * 0.018) * (Math.random() < 0.5 ? 1 : -1);
-            this.cx = mouse.x; this.cy = mouse.y;
-            this.life = 0;
-            this.maxOrbitLife = 260 + Math.random() * 180;
-            this.fadeIn = 0;
-          } else if (dist < captureR && mouse.active) {
-            // Attirée même si pas capturée
-            const force = (1 - dist / captureR) * 0.06;
-            this.vx += (dx / dist) * force * 2.5;
-            this.vy += (dy / dist) * force * 2.5;
+          const captureR = 200;
+
+          if (dist < captureR && mouse.active) {
+            const currentOrbiters = bgParticles.filter(p => p.orbit && !p.dying).length;
+            if (currentOrbiters < MAX_ORB) {
+              // Capture → devient orbitale
+              this.orbit      = true;
+              this.orbitAngle = Math.atan2(this.y - mouse.y, this.x - mouse.x);
+              this.orbitR     = 36 + Math.random() * 60;
+              this.orbitSpeed = (0.020 + Math.random() * 0.020) * (Math.random() < 0.5 ? 1 : -1);
+              this.cx = mouse.x; this.cy = mouse.y;
+              this.life = 0; this.fadeIn = 0; this.fadeOut = 1;
+            } else {
+              // Attirée mais pas capturée — force d'attraction rapide
+              const force = (1 - dist / captureR) * 0.07;
+              this.vx += (dx / dist) * force * 3.0;
+              this.vy += (dy / dist) * force * 3.0;
+            }
           } else {
-            this.vy -= 0.006;
+            // Dérive naturelle vers le haut — couvre tout l'écran
+            this.vy -= 0.005;
           }
+
           this.vx *= 0.96; this.vy *= 0.96;
           this.x += this.vx; this.y += this.vy;
           this.life++;
+
+          // Wrap sur X et Y pour couvrir tout l'écran en permanence
           if (this.x < -20) this.x = W + 20;
           if (this.x > W + 20) this.x = -20;
-          if (this.y < -40 || this.life > this.maxLife) this.reset(false);
+          if (this.y < -40) this.reset(false);
+          if (this.life > this.maxLife) this.reset(false);
         }
+
         this.trail.unshift({ x: this.x, y: this.y });
         if (this.trail.length > this.trailLen) this.trail.pop();
       }
+
       draw() {
-        const a = this.orbit ? this.alpha * this.fadeIn : this.alpha;
+        const baseAlpha = this.orbit
+          ? this.alpha * this.fadeIn * this.fadeOut
+          : this.alpha * this.fadeOut;
+
         for (let t = 0; t < this.trail.length; t++) {
           const r = 1 - t / this.trail.length;
           ctx.beginPath();
           ctx.arc(this.trail[t].x, this.trail[t].y, this.size * r * 0.7, 0, Math.PI*2);
           ctx.fillStyle = this.color;
-          ctx.globalAlpha = a * r * (this.orbit ? 0.5 : 0.3);
+          ctx.globalAlpha = baseAlpha * r * (this.orbit ? 0.5 : 0.28);
           ctx.fill();
         }
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size + (this.orbit ? 1 : 0), 0, Math.PI*2);
+        ctx.arc(this.x, this.y, this.size + (this.orbit ? 1.2 : 0), 0, Math.PI*2);
         ctx.fillStyle = this.color;
-        ctx.globalAlpha = a;
-        ctx.shadowBlur = this.orbit ? 20 : 8;
+        ctx.globalAlpha = baseAlpha;
+        ctx.shadowBlur  = this.orbit ? 22 : 7;
         ctx.shadowColor = this.color;
         ctx.fill();
         ctx.shadowBlur = 0; ctx.globalAlpha = 1;
       }
     }
-
-    function orbitCount() { return bgParticles.filter(p => p.orbit).length; }
 
     // Connexions entre proches
     function drawConnections(pts) {
@@ -446,12 +497,12 @@
         for (let j = i+1; j < pts.length; j++) {
           const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
           const d  = Math.sqrt(dx*dx + dy*dy);
-          if (d < 85) {
+          if (d < 90) {
             ctx.beginPath();
             ctx.moveTo(pts[i].x, pts[i].y);
             ctx.lineTo(pts[j].x, pts[j].y);
             ctx.strokeStyle = pts[i].color;
-            ctx.globalAlpha = (1 - d/85) * (pts[i].orbit || pts[j].orbit ? 0.2 : 0.09);
+            ctx.globalAlpha = (1 - d/90) * (pts[i].orbit || pts[j].orbit ? 0.22 : 0.08);
             ctx.lineWidth = 0.7;
             ctx.stroke();
             ctx.globalAlpha = 1;
@@ -460,10 +511,42 @@
       }
     }
 
-    const bgParticles = Array.from({ length: 100 }, (_, i) => new BgParticle(true));
+    const bgParticles = Array.from({ length: COUNT }, (_, i) => new BgParticle(true));
 
+    // Spawn supplémentaires depuis les bords pour couvrir tout l'écran
+    function spawnEdge() {
+      // Trouver une particule libre (non orbitale, non dying) à réinitialiser depuis un bord
+      const free = bgParticles.find(p => !p.orbit && !p.dying && p.life > p.maxLife * 0.8);
+      if (free) {
+        const edge = Math.floor(Math.random() * 4);
+        if (edge === 0) { free.x = Math.random() * W; free.y = H + 5; }       // bas
+        else if (edge === 1) { free.x = -5; free.y = Math.random() * H; }     // gauche
+        else if (edge === 2) { free.x = W + 5; free.y = Math.random() * H; }  // droite
+        else { free.x = Math.random() * W; free.y = -5; }                     // haut
+        free.vx = (Math.random() - 0.5) * 0.4;
+        free.vy = -(Math.random() * 0.5 + 0.08);
+        free.life = 0;
+      }
+    }
+
+    let frame = 0;
     function loop() {
       ctx.clearRect(0, 0, W, H);
+      frame++;
+
+      // Spawn depuis les bords toutes les 8 frames pour maintenir la densité
+      if (frame % 8 === 0) spawnEdge();
+
+      // Si trop d'orbitales, forcer les plus vieilles à disparaître
+      const orbiters = bgParticles.filter(p => p.orbit && !p.dying);
+      if (orbiters.length > MAX_ORB) {
+        // Trier par âge et tuer les plus vieilles
+        orbiters.sort((a, b) => b.life - a.life);
+        for (let k = MAX_ORB; k < orbiters.length; k++) {
+          orbiters[k].forceRelease();
+        }
+      }
+
       drawConnections(bgParticles);
       bgParticles.forEach(p => { p.update(); p.draw(); });
       requestAnimationFrame(loop);
@@ -472,19 +555,9 @@
   })();
   </script>
 
-
   <!-- ANIMATIONS D'APPARITION + RE-APPARITION PAR SECTION -->
   <style>
-    #bg-image {
-      position: fixed;
-      inset: 0;
-      background-image: url('fond_portefolio.jpg');
-      background-size: cover;
-      background-position: center center;
-      background-repeat: no-repeat;
-      z-index: -2;
-      filter: brightness(0.38) saturate(1.3);
-    }
+    /* #bg-image → défini dans style.css */
     .reveal {
       opacity: 0;
       transform: translateY(40px);
