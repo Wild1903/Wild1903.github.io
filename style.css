@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
 /* RESET SIMPLE */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -193,17 +195,20 @@ box-shadow: var(--shadow-soft);
 }
 
 .logo{
-width: 44px;
+width: 58px;
 height: 44px;
 border-radius: 12px;
 border: 2px solid var(--accent);
 display: flex;
 align-items: center;
 justify-content: center;
-font-family: var(--font-mono);
-font-size: 1.2rem;
+font-family: 'VT323', monospace;
+font-size: 1.6rem;
+letter-spacing: 2px;
 color: var(--accent);
-box-shadow: var(--shadow-glow);
+box-shadow: var(--shadow-glow), 0 0 20px rgba(168,85,247,0.5);
+text-shadow: 0 0 10px rgba(168,85,247,0.8), 2px 2px 0px rgba(0,0,0,0.8);
+image-rendering: pixelated;
 }
 
 nav a{
