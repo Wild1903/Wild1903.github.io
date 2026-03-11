@@ -1,158 +1,299 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEMIERE DORIAN - Portfolio</title>
-    <div class="container"> 
-            <div class="navbar">
-                <a href="dorian.html">Mon CV</a>
-                <a href="page_contact_dorian.html">Contact</a>
-            <h1>LEMIERE DORIAN</h1>
-            <h2>Etudiant en Cybersécurité</h2>
-        </div>
-    </div>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: url('red_distortion_4.jpg') center/cover;
-            color: rgb(255, 255, 255);
-            margin: 0;
-            padding: 0;
-        }
-        .navbar {
-            display: fixed;
-            justify-content: center;
-            background: rgb(8, 9, 11);
-            padding: 15px 0%;
-        }
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            margin: 0 10px;
-            background: rgb(197, 63, 69);
-            border-radius: 5px;
-            font-weight: bold;
-            justify-content: center;
-        }
-        .navbar a:hover {
-            background: rgb(197, 63, 69);
-        }
-        .container {
-            display: flex;
-            justify-content: center;
-            background: rgb(8, 9, 11);
-            padding: 15px 0;
-            position: fixed;
-            width: 100%;
-            height: 20%;
-            opacity: 1;
-            font-weight: bold;
-            z-index: 1;
-        }
-        .header {
-            text-align: center;
-            padding: 40px;
-            background: rgba(8, 9, 11);
+  <meta charset="UTF-8">
+  <title>Dorian Lemiere - Portfolio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 
-        }
-        .header h1 {
-            font-size: 42px;
-            margin: 0;
-            color: rgb(255, 255, 255);
-        }
-        .header h2 {
-            font-size: 24px;
-            color: rgb(197, 63, 69);
-        }
-        .section {
-            max-width: 1100px;
-            margin: auto;
-            padding: 50px 0px;
-            transform: translateY(200px);
-        }
-        .talents, .questions, .appreciations {
-            display: flex;
-            justify-content: space-between;
-        }
-        .talent, .question, .appreciation {
-            width: 30%;
-            background: rgba(8, 9, 11, 0.1);
-            padding: 25px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .contact {
-            background: rgba(8, 9, 11) center/cover;
-            text-align: center;
-        }
-        .social-icons img {
-            width: 30px;
-            margin: 0 10px;
-        }
-        .back {
-            border-left: 10px;
-            max-height: 20px;
-            max-width : 20px;
-            padding: 15px 0%;
-        }
-    </style>
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script>
+    (function(){
+      emailjs.init("s_zf_5KAAajyYohdQ");
+    })();
+  </script>
 </head>
 <body>
-    <div class="section">
-        <h2>A propos de moi</h2>
-        <p>Etudiant en Cybersécurité à Ingetis et passionné depuis des années je maitrise les langages de programmation comme Python, Java Script, HTML5, CSS et C++ aussi bien que les systèmes d’exploitation comme Windows avec Powershell, Linux avec Bash et Mac OS avec Z Shell.</p>
-    </div>
-    <div class="section">
-        <h2>Mes Différents Talents</h2>
-        <div class="talents">
-            <div class="talent"><h3>Organisation</h3><p>J’excelle dans la mise en place de session de projet.</p></div>
-            <div class="talent"><h3>Cohésion d’équipe</h3><p>Avec mes expériences passé je sais m’adapter en équipe en plus de mon talent en solitaire.</p></div>
-            <div class="talent"><h3>Management</h3><p>Mon talent de management me permet de gérer une equipe à la perfection.</p></div>
+
+  <!-- FOND VIDÉO -->
+  <video id="bg-video" autoplay muted loop playsinline><source src="fond_porte_folio.mp4" type="video/mp4"></video>
+
+  <!-- SCÈNE 3D APPLE-STYLE (Three.js) -->
+  <canvas id="cyber-canvas"></canvas>
+
+  <!-- ÉCRAN BOOT TERMINAL -->
+  <div id="boot-screen">
+    <div class="terminal">
+      <div class="terminal-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="terminal-title">~/terminal</span>
+      </div>
+      <div class="terminal-body">
+        <p class="line">
+          <span class="prompt">dorian@portfolio:~$</span>
+          <span id="boot-command" class="typed"></span>
+          <span class="cursor" id="boot-cursor"></span>
+        </p>
+        <p class="line hidden" id="boot-line-2">
+          Lecture des dépendances…  <span class="progress-label">(sudo apt embauche lemiere-dorian)</span>
+        </p>
+        <div class="progress-container hidden" id="boot-progress">
+          <div class="progress-bar" id="progress-bar"></div>
         </div>
+        <p class="line hidden" id="boot-line-3">
+          Installation terminée. Lancement du portfolio…
+        </p>
+      </div>
     </div>
-    <div class="section">
-        <h2>Question réponse</h2>
-        <div class="questions">
-            <div class="question"><h3>Pourquoi moi et pas un autre ?</h3><p>Parce que je suis sur que m’intégrer à votre équipe sera bénéfique pour vous est moi et qu’ensemble nous arriverions à de grandes choses.</p></div>
-            <div class="question"><h3>Qu’apporterais-je de plus à votre entreprise ?</h3><p>Je suis sur que mon expérience vous sera d’une grande utilité et qu’évoluer dans votre entreprise me permettra de la représenter au près des client.</p></div>
-            <div class="question"><h3>Quelles sont mes forces et mes faiblesses ?</h3><p>Pour ce qui est de mes forces je sais m’adapter à toutes les situations. Et pour mes faiblesse je n’arrive pas à laisser une tache inachevé.</p></div>
+  </div>
+
+  <!-- PAGE PORTFOLIO COMPLÈTE -->
+  <div id="portfolio" class="hidden">
+    <header class="main-header">
+      <div class="logo">D.</div>
+      <nav>
+        <a href="#section-home">Accueil</a>
+        <a href="#section-about">Profil</a>
+        <a href="#section-projects">Projets</a>
+        <a href="#section-contact">Contact</a>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Section home / hero -->
+      <section id="section-home" class="section hero">
+        <div class="hero-text">
+          <p class="hero-tag">Étudiant en Cybersécurité – Admin systèmes & réseaux</p>
+          <h1>Je suis <span class="accent">Dorian Lemiere</span></h1>
+          <h2 class="hero-sub">
+            <span id="hero-typed"></span><span class="cursor soft"></span>
+          </h2>
+          <p class="hero-desc">
+            Étudiant en Cybersécurité à Ingetis, co‑fondateur et CEO de la marque de vêtements française Vatier,
+            je combine une double casquette : technique (systèmes, réseaux, sécurité) et entrepreneuriale.
+          </p>
+          <div class="hero-buttons">
+            <a href="#section-projects" class="btn primary">Voir mes projets</a>
+            <a href="#section-contact" class="btn ghost">Me contacter</a>
+          </div>
         </div>
-    </div>
-    <div class="section">
-        <h2>Appréciations d’anciens collaborateurs</h2>
-        <div class="appreciations">
-            <div class="appreciation"><p>Dorian est un collègue qui a su rendre notre quotidien challengeant avec sa détermination et son envie d’apprendre de façon intense. Il est vraiment toujours amusant. Son sourire est communicatif.</p><p>- Elise Reillon, Ville de Paris</p></div>
-            <div class="appreciation"><p>Dorian est un pilier dans l’équipe, un dévouement à la tâche et sa capacité d’analyse nous prenons en effet ses atouts énormes.</p><p>- William Vatier, McDonald France</p></div>
-            <div class="appreciation"><p>Dorian est un collègue qui s’investit pleinement dans le travail qu’on lui fournit. C’est un collègue exemplaire.</p><p>- Melvin Jhonson, Maison Vatier</p></div>
+
+        <div class="hero-side">
+          <div class="status-card">
+            <h3>Statut actuel</h3>
+            <p><span class="dot-status green"></span> À la recherche d'une alternance / opportunité en cybersécurité</p>
+            <p>Localisation : Paris</p>
+            <p>Rôle actuel : CEO & IT manager chez Vatier</p>
+          </div>
+
+          <div class="terminal-mini">
+            <div class="terminal-mini-header">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="terminal-title">about_dorian.sh</span>
+            </div>
+            <div class="terminal-mini-body">
+              <p>> focus: cybersécurité, systèmes & réseaux</p>
+              <p>> side: création de marque & management d'équipe</p>
+              <p>> soft skills: organisation, cohésion d'équipe, management</p>
+            </div>
+          </div>
         </div>
-    </div>
-    <div>
-        <br><br><br><br><br><br><br><br><br>
-        <iframe data-testid="embed-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/episode/5wRnKUawK5U6YqSuZy2OOq?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-    </div>
-    <div class="contact" >
+      </section>
+
+      <!-- Section about -->
+      <section id="section-about" class="section">
+        <h2>À propos de moi</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Profil personnel</h3>
+            <p>
+              Étudiant en Cybersécurité extrêmement motivé pour développer constamment mes compétences
+              et évoluer professionnellement. J'aime autant le côté technique que le travail d'équipe
+              et le management de projet.
+            </p>
+            <p>
+              J'ai l'habitude de travailler sous pression, de m'adapter rapidement et de garder un bon
+              niveau de communication avec les équipes techniques comme non techniques.
+            </p>
+          </div>
+
+          <div class="card">
+            <h3>Parcours académique</h3>
+            <ul class="skills">
+              <li>Collège Jacques Prévert</li>
+              <li>Lycée Saint Charles</li>
+              <li>Lycée international Montessori Athena</li>
+              <li>Lycée Clément Ader – STI2D (SIN)</li>
+              <li>Ingetis – BTS CIEL (Cybersécurité)</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section experience -->
+      <section class="section">
+        <h2>Expériences & compétences</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Expériences professionnelles</h3>
+            <ul class="contact-list">
+              <li>Stage en hôtellerie – Hôtel Bonaparte (Février 2020)</li>
+              <li>Encadrement d'évènements sportifs – Aérodrome d'Issoudun (Août 2022)</li>
+              <li>Préparateur de commandes – McDonald's Aéroport d'Orly (Fév – Juil 2022)</li>
+              <li>Animation & ateliers – École maternelle Maurice d'Ocagne (Août 2022)</li>
+              <li>CEO & IT manager – Maison Vatier (en cours)</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Qualités & soft skills</h3>
+            <ul class="skills">
+              <li>Travail d'équipe</li>
+              <li>Autonomie</li>
+              <li>Capacité à travailler sous pression</li>
+              <li>Organisation de projets</li>
+              <li>Cohésion d'équipe</li>
+              <li>Management</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Compétences techniques</h3>
+            <ul class="skills">
+              <li>Cybersécurité (concepts de base, bonnes pratiques)</li>
+              <li>Administration systèmes (Windows, Linux)</li>
+              <li>Scripts & automatisation (PowerShell, Bash)</li>
+              <li>Programmation : Python, JavaScript, C++ (niveau étudiant)</li>
+              <li>Réseaux & infrastructure</li>
+              <li>Suite Office (Word, Excel, PowerPoint)</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section projects -->
+      <section id="section-projects" class="section">
+        <h2>Projets & GitHub</h2>
+        <div class="grid">
+          <article class="card project">
+            <h3>Présence GitHub</h3>
+            <p>
+              Je partage mes projets et expérimentations sur GitHub : scripts, petits projets web
+              et travaux liés à mes études en cybersécurité et développement.
+            </p>
+            <p class="project-meta">
+              Profil : <a href="https://github.com/Wild1903" target="_blank">github.com/Wild1903</a>
+            </p>
+          </article>
+
+          <article class="card project">
+            <h3>Portfolio & branding</h3>
+            <p>
+              Création de ce portfolio orienté « terminal Linux » pour refléter mon univers :
+              cybersécurité, systèmes et ligne de commande.
+            </p>
+            <p class="project-meta">
+              Stack : HTML, CSS, JavaScript – hébergé sur GitHub Pages.
+            </p>
+          </article>
+
+          <article class="card project">
+            <h3>Projet Vatier</h3>
+            <p>
+              Co‑création et gestion de la marque de vêtements française Vatier, avec une forte implication
+              sur la stratégie digitale, l'image de marque et la partie IT.
+            </p>
+            <p class="project-meta">
+              Rôle : CEO & IT manager – gestion d'équipe, communication, organisation.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- Section contact -->
+      <section id="section-contact" class="section">
         <h2>Contact</h2>
-        <br><a href="tel:0763709829">Me contacter par téléphone</a>
-        <br><a href="mailto:lemiere.dorian19@gmail.com">Me contacter par email</a>
-        <div class="social-icons">
-            <img src="linkedin.png" alt="linkedIn" onclick="showInfo('linkedin')"> 
-            <img src="github.png" alt="gitHub" onclick="showInfo('github')">
+        <div class="grid">
+          <div class="card">
+            <h3>Me joindre</h3>
+            <p>Une opportunité, une question ou un projet à discuter ? Envoyez‑moi un message, je réponds rapidement.</p>
+            <ul class="contact-list">
+              <li>Email : <a href="/cdn-cgi/l/email-protection#8ae6efe7e3eff8efa4eee5f8e3ebe4bbb3caede7ebe3e6a4e9e5e7"><span class="__cf_email__" data-cfemail="2b474e46424e594e054f4459424a451a126b4c464a424705484446">[email&#160;protected]</span></a></li>
+              <li>Téléphone : <a href="tel:+33763709829">07 63 70 98 29</a></li>
+              <li>Localisation : Paris</li>
+              <li>GitHub : <a href="https://github.com/Wild1903" target="_blank">Wild1903</a></li>
+              <li>Instagram : <a href="https://instagram.com/dorian_vatier" target="_blank">@dorian_vatier</a></li>
+            </ul>
+          </div>
+
+          <!-- Formulaire connecté à EmailJS -->
+          <form class="card contact-form" id="contact-form">
+            <h3>Message rapide</h3>
+            <label>Nom
+              <input type="text" id="name" name="name" placeholder="Votre nom" required>
+            </label>
+            <label>Email
+              <input type="email" id="email" name="email" placeholder="vous@exemple.com" required>
+            </label>
+            <label>Téléphone
+              <input type="tel" id="phone" name="phone" placeholder="Votre numéro (optionnel)">
+            </label>
+            <label>Message
+              <textarea id="message" name="message" rows="4" placeholder="Expliquez‑moi votre besoin" required></textarea>
+            </label>
+            <button type="submit" class="btn primary full">Envoyer</button>
+            <p id="result-message" class="form-note"></p>
+          </form>
         </div>
-    </div>
-    <script>
-        function showInfo(site) {
-            const pages = {
-                'linkedin': 'https://www.linkedin.com/in/dorian-lemiere-466a69319/',
-                'github': 'https://github.com/Wild1903'
-            };
-            if (pages[site]) {
-                window.open(pages[site], '_blank');
-            } else {
-                alert("More information about " +site);
-            }
-        }
-    </script>
+      </section>
+    </main>
+
+    <footer class="main-footer">
+      <p>© <span id="year"></span> Dorian Lemiere – Portfolio terminal style</p>
+    </footer>
+  </div>
+
+  <!-- Three.js CDN -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="script.js"></script>
+
+  <!-- Script EmailJS pour le formulaire -->
+  <script>
+    document.getElementById('contact-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      let formData = {
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value,
+        phone: document.getElementById("phone").value,
+        message: document.getElementById("message").value
+      };
+
+      emailjs.send("service_7dusbew", "template_xbyobac", formData)
+        .then(function(response) {
+          console.log("Email envoyé avec succès :", response);
+
+          emailjs.send("service_7dusbew", "template_o4g5jlf", {
+            to_email: formData.email,
+            user_name: formData.name
+          }).then(function(autoResponse) {
+            document.getElementById("result-message").innerText =
+              "Message envoyé avec succès ! Vérifiez votre email.";
+            document.getElementById("contact-form").reset();
+          }, function(error) {
+            document.getElementById("result-message").innerText =
+              "Message envoyé, mais erreur lors de l'envoi du mail automatique.";
+          });
+        }, function(error) {
+          document.getElementById("result-message").innerText =
+            "Erreur lors de l'envoi de votre message. Veuillez réessayer.";
+        });
+    });
+  </script>
 </body>
-</html>
+</html>;
