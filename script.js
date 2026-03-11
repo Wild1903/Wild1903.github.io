@@ -15,8 +15,10 @@ function init3D() {
   renderer = new THREE.WebGLRenderer({ 
     canvas: canvas, 
     antialias: true, 
-    alpha: true 
+    alpha: true,
+    premultipliedAlpha: false
   });
+  renderer.setClearColor(0x000000, 0); // fond totalement transparent
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
