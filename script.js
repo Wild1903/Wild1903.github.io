@@ -329,13 +329,15 @@ document.addEventListener("submit", (e) => {
 });
 // === GAME HUB — touche M ===
 document.addEventListener("keydown", (e) => {
-  // Ignorer si le focus est dans n'importe quel champ de saisie
+  // Ignorer si le focus est dans n'importe quel champ de saisie ou élément de formulaire
   const active = document.activeElement;
   const inField = active && (
     active.tagName === "INPUT" ||
     active.tagName === "TEXTAREA" ||
     active.tagName === "SELECT" ||
-    active.isContentEditable
+    active.tagName === "BUTTON" ||
+    active.isContentEditable ||
+    active.closest("form") !== null  // n'importe quel élément dans un <form>
   );
 
   if (e.key === "m" || e.key === "M") {
