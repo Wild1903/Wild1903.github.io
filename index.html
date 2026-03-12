@@ -361,7 +361,14 @@
   <script>
     const keyMap = { 'z':'#section-home','q':'#section-about','s':'#section-xp','d':'#section-contact' };
     document.addEventListener('keydown', (e) => {
-      if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+      const active = document.activeElement;
+      const inField = active && (
+        active.tagName === 'INPUT' ||
+        active.tagName === 'TEXTAREA' ||
+        active.tagName === 'SELECT' ||
+        active.isContentEditable
+      );
+      if (inField) return;
       const key = e.key.toLowerCase();
       if (keyMap[key]) {
         e.preventDefault();
