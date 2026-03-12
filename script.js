@@ -327,28 +327,50 @@ document.addEventListener("submit", (e) => {
   e.preventDefault();
   alert("Formulaire de démonstration.\nConnecte-le plus tard à un service d'envoi d'email 😉");
 });
-// === GAME HUB — touche M ===
-document.addEventListener("keydown", (e) => {
-  // Ignorer si le focus est dans n'importe quel champ de saisie ou élément de formulaire
-  const active = document.activeElement;
-  const inField = active && (
-    active.tagName === "INPUT" ||
-    active.tagName === "TEXTAREA" ||
-    active.tagName === "SELECT" ||
-    active.tagName === "BUTTON" ||
-    active.isContentEditable ||
-    active.closest("form") !== null  // n'importe quel élément dans un <form>
-  );
+// === GAME HUB — RÈGLES STRICTES ===
+// Règle 1 : seul M ouvre le hub (et uniquement si aucun élément interactif n'a le focus)
+// Règle 2 : seules les cards du hub permettent d'accéder aux jeux (navigation via data-game)
 
+function openHub() {
+  const hub = document.getElementById("game-hub");
+  if (hub) hub.classList.add("open");
+}
+function closeHub() {
+  const hub = document.getElementById("game-hub");
+  if (hub) hub.classList.remove("open");
+}
+
+// Vrai focus "neutre" = body, html, ou aucun élément interactif
+function isFocusNeutral() {
+  const a = document.activeElement;
+  if (!a || a === document.body || a === document.documentElement) return true;
+  // Tout ce qui peut recevoir une saisie ou un clic intentionnel bloque M
+  const blocking = ['INPUT','TEXTAREA','SELECT','BUTTON','A'];
+  if (blocking.includes(a.tagName)) return false;
+  if (a.isContentEditable) return false;
+  if (a.closest('form')) return false;
+  return true;
+}
+
+document.addEventListener("keydown", (e) => {
+  // Touche M → ouvrir/fermer le hub UNIQUEMENT si focus neutre
   if (e.key === "m" || e.key === "M") {
-    if (inField) return;
+    if (!isFocusNeutral()) return;
     const hub = document.getElementById("game-hub");
     if (!hub) return;
     hub.classList.toggle("open");
   }
+  // Échap → toujours fermer
+  if (e.key === "Escape") closeHub();
+});
 
-  if (e.key === "Escape") {
-    const hub = document.getElementById("game-hub");
-    if (hub) hub.classList.remove("open");
-  }
+// Clic sur une card → aller au jeu (SEUL chemin d'accès aux jeux)
+document.addEventListener("click", (e) => {
+  const card = e.target.closest(".game-card[data-game]");
+  if (!card) return;
+  const hub = document.getElementById("game-hub");
+  // Vérifier que le hub est bien ouvert (sécurité supplémentaire)
+  if (!hub || !hub.classList.contains("open")) return;
+  const dest = card.getAttribute("data-game");
+  if (dest) window.location.href = dest;
 });
