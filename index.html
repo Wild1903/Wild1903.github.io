@@ -366,7 +366,9 @@
         active.tagName === 'INPUT' ||
         active.tagName === 'TEXTAREA' ||
         active.tagName === 'SELECT' ||
-        active.isContentEditable
+        active.tagName === 'BUTTON' ||
+        active.isContentEditable ||
+        active.closest('form') !== null
       );
       if (inField) return;
       const key = e.key.toLowerCase();
