@@ -374,6 +374,20 @@
   <canvas id="ps-canvas" style="position:fixed;inset:0;z-index:2;pointer-events:none;width:100%;height:100%;"></canvas>
   <script>
   (function() {
+    // Particules uniquement si clavier physique détecté (desktop ou tablette+clavier)
+    if (!document.documentElement.classList.contains('has-keyboard')) {
+      // Réobserver : si le clavier est branché plus tard, on démarre les particules
+      const observer = new MutationObserver(() => {
+        if (document.documentElement.classList.contains('has-keyboard')) {
+          observer.disconnect();
+          initParticles();
+        }
+      });
+      observer.observe(document.documentElement, { attributeFilter: ['class'] });
+      return;
+    }
+    initParticles();
+    function initParticles() {
     const canvas = document.getElementById('ps-canvas');
     const ctx    = canvas.getContext('2d');
     let W = canvas.width  = window.innerWidth;
@@ -584,6 +598,7 @@
       requestAnimationFrame(loop);
     }
     loop();
+    } // fin initParticles
   })();
   </script>
 
