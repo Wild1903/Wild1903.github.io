@@ -312,7 +312,7 @@ max-width: 500px;
 margin-bottom: 40px;
 }
 
-.hero-buttons{gap:16px;flex-wrap:nowrap}
+.hero-buttons{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 
 /* CARDS AÉRÉES */
 .status-card, .terminal-mini, .card{
@@ -677,23 +677,154 @@ text-align: center;
 @keyframes blink{0%,50%{opacity:1}50.01%,100%{opacity:0}}
 @keyframes progressStripe{0%{background-position:0 0}100%{background-position:200% 0}}
 
-/* RESPONSIVE */
-@media (max-width: 1200px){
-.grid{grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:var(--spacing-md)}
+/* ============================================================
+   RESPONSIVE — TABLETTE & MOBILE
+   (nav clavier, particules, hub jeux masqués sans clavier physique)
+   ============================================================ */
+
+/* --- TABLETTE (≤ 1024px) --- */
+@media (max-width: 1024px) {
+  :root {
+    --spacing-xl: 80px;
+    --spacing-lg: 56px;
+    --spacing-md: 36px;
+  }
+  .grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--spacing-md); }
+  #portfolio { padding: var(--spacing-lg) 5vw var(--spacing-md); }
+  .main-header { padding: 20px 24px; }
 }
 
-@media (max-width: 900px){
-.hero{grid-template-columns: 1fr;gap:var(--spacing-lg);text-align:center}
-#portfolio{padding: var(--spacing-lg) 6vw var(--spacing-md)}
-.main-header{padding:var(--spacing-md);flex-direction:column;align-items:flex-start;gap:16px}
-nav a{margin:0 12px 0 0}
-.section{padding:var(--spacing-lg) 0}
-.section h2{font-size:2rem}
+/* --- MOBILE PAYSAGE + PETITE TABLETTE (≤ 900px) --- */
+@media (max-width: 900px) {
+  :root {
+    --spacing-xl: 60px;
+    --spacing-lg: 40px;
+    --spacing-md: 28px;
+    --spacing-sm: 20px;
+  }
+
+  /* Hero en colonne */
+  .hero {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+    text-align: center;
+  }
+  .hero-desc { max-width: 100%; margin-left: auto; margin-right: auto; }
+  .hero-buttons { justify-content: center; }
+  .hero-tag { font-size: 0.8rem; }
+
+  /* Header */
+  .main-header {
+    padding: 16px 20px;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  /* Sections */
+  .section { padding: var(--spacing-lg) 0; }
+  .section h2 { font-size: 1.9rem; }
+
+  /* Grid */
+  .grid { grid-template-columns: 1fr; gap: var(--spacing-md); }
+
+  /* Cards padding réduit */
+  .status-card, .terminal-mini, .card { padding: 24px 20px; }
+
+  /* Boot terminal */
+  .terminal { width: min(96vw, 560px); }
+  .terminal-body { font-size: 0.88rem; padding: 18px 16px 22px; }
 }
 
-@media (max-width: 480px){
-#portfolio{padding: var(--spacing-md) 5vw var(--spacing-sm)}
-.terminal{width:96vw;padding:20px}
-.grid{grid-template-columns:1fr;gap:var(--spacing-sm)}
-.hero-buttons{flex-direction:column;align-items:stretch}
+/* --- MOBILE PORTRAIT (≤ 600px) --- */
+@media (max-width: 600px) {
+  :root {
+    --spacing-xl: 48px;
+    --spacing-lg: 32px;
+    --spacing-md: 22px;
+    --spacing-sm: 16px;
+  }
+
+  #portfolio { padding: var(--spacing-lg) 4vw var(--spacing-md); }
+
+  /* Header compact */
+  .main-header {
+    padding: 14px 16px;
+    border-radius: 10px;
+    margin-bottom: var(--spacing-lg);
+  }
+  .logo { width: 38px; height: 38px; font-size: 1rem; }
+
+  /* Hero */
+  .hero h1 { font-size: clamp(2rem, 8vw, 2.8rem); }
+  .hero-sub { font-size: 1.05rem; }
+  .hero-desc { font-size: 1rem; }
+  .hero-buttons {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .btn { padding: 13px 24px; font-size: 0.95rem; text-align: center; }
+
+  /* Sections */
+  .section h2 { font-size: 1.6rem; }
+  .section h2::after { width: 56px; }
+
+  /* Cards */
+  .status-card, .terminal-mini, .card { padding: 20px 16px; }
+  .card h3, .status-card h3 { font-size: 1.05rem; }
+
+  /* Skills pills */
+  .skills li { font-size: 0.78rem; padding: 6px 12px; }
+
+  /* Contact form */
+  .contact-form input,
+  .contact-form textarea { padding: 13px 14px; font-size: 0.95rem; }
+
+  /* Boot terminal */
+  .terminal { width: 96vw; }
+  .terminal-body { font-size: 0.78rem; padding: 14px 12px 18px; line-height: 1.5; }
+  .terminal-header { padding: 10px 14px; }
+  .progress-container { height: 12px; }
+
+  /* Footer */
+  .main-footer { padding: var(--spacing-md) 0; font-size: 0.82rem; }
+}
+
+/* --- TRÈS PETIT MOBILE (≤ 380px) --- */
+@media (max-width: 380px) {
+  .hero h1 { font-size: 1.75rem; }
+  .hero-tag { font-size: 0.72rem; letter-spacing: 0.12em; }
+  .terminal-body { font-size: 0.72rem; }
+  .section h2 { font-size: 1.4rem; }
+}
+
+/* ============================================================
+   ÉLÉMENTS DESKTOP-ONLY (masqués sans clavier physique)
+   Gérés via JS : la classe .has-keyboard est ajoutée au <html>
+   quand un clavier physique est détecté.
+   ============================================================ */
+
+/* Particules canvas — masquées par défaut sur touch */
+#ps-canvas { display: none; }
+html.has-keyboard #ps-canvas { display: block; }
+
+/* Nav raccourcis clavier ZQSD */
+.nav-kbd kbd { display: none; }
+html.has-keyboard .nav-kbd kbd { display: inline-flex; }
+
+/* Hub jeux (touche M) — masqué sans clavier */
+#game-hub { display: none !important; }
+html.has-keyboard #game-hub { display: flex !important; }
+
+/* Sur touch sans clavier : nav classique sans les kbd hints */
+@media (hover: none) and (pointer: coarse) {
+  /* Désactiver les hover transforms lourds sur touch */
+  .status-card:hover, .card:hover {
+    transform: none;
+    box-shadow: var(--shadow-soft);
+    border-color: rgba(49,34,68,0.8);
+  }
+  .btn.primary:hover { transform: none; }
+  .btn.ghost:hover { transform: none; }
+  .skills li:hover { transform: none; }
 }
