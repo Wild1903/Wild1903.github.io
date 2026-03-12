@@ -210,19 +210,32 @@ function startHeroTyping() {
 
 // === INITIALISATION ===
 document.addEventListener("DOMContentLoaded", () => {
-  // Lancer 3D d'abord
   init3D();
 
-  // Puis boot sequence
-  const bootCommand = "sudo apt embauche lemiere-dorian";
-  const bootCommandEl = document.getElementById("boot-command");
-  const bootCursor = document.getElementById("boot-cursor");
-  const line2 = document.getElementById("boot-line-2");
-  const line3 = document.getElementById("boot-line-3");
-  const progressContainer = document.getElementById("boot-progress");
-  const progressBar = document.getElementById("progress-bar");
   const bootScreen = document.getElementById("boot-screen");
-  const portfolio = document.getElementById("portfolio");
+  const portfolio  = document.getElementById("portfolio");
+  const yearSpan   = document.getElementById("year");
+  if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+
+  // Retour depuis un jeu (?hub=1) -> skip le boot, ouvre direct le hub
+  if (new URLSearchParams(window.location.search).get("hub") === "1") {
+    bootScreen.style.display = "none";
+    portfolio.classList.remove("hidden");
+    startHeroTyping();
+    const hub = document.getElementById("game-hub");
+    if (hub) hub.classList.add("open");
+    history.replaceState(null, "", window.location.pathname);
+    return;
+  }
+
+  // Boot sequence normale
+  const bootCommand = "sudo apt embauche lemiere-dorian";
+  const bootCommandEl  = document.getElementById("boot-command");
+  const bootCursor     = document.getElementById("boot-cursor");
+  const line2          = document.getElementById("boot-line-2");
+  const line3          = document.getElementById("boot-line-3");
+  const progressContainer = document.getElementById("boot-progress");
+  const progressBar    = document.getElementById("progress-bar");
 
   typeText(bootCommandEl, bootCommand, 70, () => {
     bootCursor.style.display = "none";
@@ -257,10 +270,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }, step);
     }, 450);
   });
-
-  // Année footer
-  const yearSpan = document.getElementById("year");
-  if (yearSpan) yearSpan.textContent = new Date().getFullYear();
 });
 
 // Formulaire demo
@@ -269,4 +278,21 @@ document.addEventListener("submit", (e) => {
   if (!form) return;
   e.preventDefault();
   alert("Formulaire de démonstration.\nConnecte-le plus tard à un service d'envoi d'email 😉");
+});
+// === GAME HUB — touche M ===
+document.addEventListener("keydown", (e) => {
+  if (e.key === "m" || e.key === "M") {
+    // Ignorer si on tape dans un input / textarea
+    const tag = document.activeElement?.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+    const hub = document.getElementById("game-hub");
+    if (!hub) return;
+    hub.classList.toggle("open");
+  }
+
+  if (e.key === "Escape") {
+    const hub = document.getElementById("game-hub");
+    if (hub) hub.classList.remove("open");
+  }
 });
