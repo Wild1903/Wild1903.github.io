@@ -15,11 +15,12 @@
   let detected = false;
   const onKey = (e) => {
     if (detected) return;
-    // Ignorer les touches virtuelles typiques (tab, enter simulés par formulaires)
-    // Un vrai clavier physique envoie une KeyboardEvent avec code non-vide
     if (e.code && e.code !== '') {
       detected = true;
       document.documentElement.classList.add('has-keyboard');
+      // Masquer le bandeau "mieux sur PC" si clavier branché en cours de session
+      const hint = document.getElementById('pc-hint');
+      if (hint) hint.remove();
       window.removeEventListener('keydown', onKey);
     }
   };
