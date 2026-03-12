@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RUNNER.EXE — Game 1</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #020c1b;
+    --bg2: #0a1628;
+    --accent: #00ffe7;
+    --accent2: #ff3cac;
+    --accent3: #7b2fff;
+    --text: #cdd6f4;
+    --muted: #6b7a99;
+    --glow: 0 0 20px rgba(0,255,231,0.5);
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* BACK BUTTON */
+  #back-btn {
+    position: fixed; top: 18px; left: 18px; z-index: 100;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--muted);
+    background: rgba(10,22,40,0.8);
+    border: 1px solid rgba(0,255,231,0.2);
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
+  }
+  #back-btn:hover { color: var(--accent); border-color: var(--accent); box-shadow: var(--glow); }
+
+  /* GAME WRAPPER */
+  #game-wrapper {
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 0;
+  }
+
+  /* HUD */
+  #hud {
+    width: min(900px, 95vw);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 4px 12px;
+  }
+
+  .hud-label { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+  .hud-value { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+  .hud-hi { color: var(--accent2); }
+
+  /* CANVAS */
+  #game-canvas {
+    display: block;
+    border: 1px solid rgba(0,255,231,0.2);
+    border-radius: 4px;
+    box-shadow: 0 0 60px rgba(0,255,231,0.1), 0 0 120px rgba(123,47,255,0.1);
+    image-rendering: pixelated;
+  }
+
+  /* CONTROLS HINT */
+  #controls {
+    margin-top: 14px;
+    display: flex; gap: 24px;
+    font-size: 0.72rem; color: var(--muted);
+  }
+  #controls kbd {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 28px; height: 24px; padding: 0 6px;
+    border-radius: 5px;
+    background: rgba(0,255,231,0.08);
+    border: 1px solid rgba(0,255,231,0.3);
+    color: var(--accent);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    margin-right: 5px;
+  }
+
+  /* OVERLAY (start / gameover) */
+  #overlay {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(2,12,27,0.92);
+    backdrop-filter: blur(8px);
+    gap: 20px;
+    transition: opacity 0.4s;
+  }
+  #overlay.hidden { opacity: 0; pointer-events: none; }
+
+  .overlay-tag {
+    font-size: 0.75rem; letter-spacing: 0.3em; color: var(--muted); text-transform: uppercase;
+  }
+  .overlay-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(2rem, 6vw, 4rem);
+    font-weight: 900;
+    color: var(--accent);
+    text-shadow: 0 0 40px rgba(0,255,231,0.7);
+    line-height: 1;
+  }
+  .overlay-sub {
+    font-size: 1rem; color: var(--text); max-width: 420px; text-align: center; line-height: 1.6;
+  }
+  .overlay-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem; font-weight: 700;
+    color: var(--accent2);
+    text-shadow: 0 0 20px rgba(255,60,172,0.6);
+  }
+  #start-btn {
+    margin-top: 8px;
+    padding: 14px 48px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem; font-weight: 700;
+    letter-spacing: 0.1em;
+    background: linear-gradient(135deg, var(--accent3), var(--accent));
+    color: #020c1b;
+    border: none; border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 0 40px rgba(0,255,231,0.4);
+    transition: all 0.3s ease;
+  }
+  #start-btn:hover { transform: scale(1.05); box-shadow: 0 0 60px rgba(0,255,231,0.7); }
+</style>
+</head>
+<body>
+
+<a href="index.html?hub=1" id="back-btn">← Retour</a>
+
+<div id="game-wrapper">
+  <div id="hud">
+    <div>
+      <div class="hud-label">Score</div>
+      <div class="hud-value" id="score-display">0</div>
+    </div>
+    <div style="text-align:center">
+      <div class="hud-label">Niveau</div>
+      <div class="hud-value" id="level-display">1</div>
+    </div>
+    <div style="text-align:right">
+      <div class="hud-label">Best</div>
+      <div class="hud-value hud-hi" id="hi-display">0</div>
+    </div>
+  </div>
+  <canvas id="game-canvas" width="900" height="300"></canvas>
+  <div id="controls">
+    <span><kbd>↑</kbd><kbd>ESPACE</kbd> Sauter</span>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay">
+  <div class="overlay-tag" id="ov-tag">Runner.exe — v2.4.1</div>
+  <div class="overlay-title" id="ov-title">RUNNER</div>
+  <div class="overlay-sub" id="ov-sub">Un run procédural unique à chaque partie.<br>Évite les obstacles — aussi longtemps que possible.</div>
+  <div class="overlay-score" id="ov-score" style="display:none"></div>
+  <button id="start-btn" id="start-btn">DÉMARRER</button>
+</div>
+
+<script>
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// ---- PALETTE PROCÉDURALE (change à chaque partie) ----
+const PALETTES = [
+  { bg:'#020c1b', ground:'#00ffe7', player:'#00ffe7', obs:'#ff3cac', star:'#7b2fff', trail:'#00ffe740' },
+  { bg:'#0d0005', ground:'#ff3cac', player:'#ff3cac', obs:'#ffe600', star:'#ff3cac', trail:'#ff3cac40' },
+  { bg:'#04001a', ground:'#7b2fff', player:'#c084fc', obs:'#00ffe7', star:'#7b2fff', trail:'#7b2fff40' },
+  { bg:'#001a08', ground:'#39ff14', player:'#39ff14', obs:'#ff3cac', star:'#39ff14', trail:'#39ff1440' },
+  { bg:'#1a0500', ground:'#fb923c', player:'#fb923c', obs:'#7b2fff', star:'#fb923c', trail:'#fb923c40' },
+];
+
+// ---- OBSTACLE TEMPLATES (forme procédurale) ----
+const OBS_SHAPES = ['rect','cactus','saw','spike','gate'];
+
+// ---- STATE ----
+let state = 'idle';
+let score = 0, hiScore = parseInt(localStorage.getItem('runner_hi')||'0');
+let frame = 0;
+let speed = 5;
+let pal, obsSeed;
+let player, obstacles, particles, stars, groundSegments;
+
+// ---- PLAYER ----
+function createPlayer() {
+  return {
+    x: 120, y: H - 80,
+    vy: 0, vx: 0,
+    w: 32, h: 36,
+    grounded: true,
+    crouching: false, // désactivé
+    jumpCount: 0,
+    trail: [],
+    glow: 0,
+    alive: true
+  };
+}
+
+// ---- GROUND (procédural) ----
+function buildGround(seed) {
+  const segs = [];
+  let x = 0;
+  const rng = mulberry32(seed);
+  // Segments plats + quelques légères variations de hauteur
+  const baseY = H - 50;
+  while (x < W + 200) {
+    const w = 60 + Math.floor(rng() * 80);
+    const dh = Math.floor(rng() * 3) === 0 ? (rng() > 0.5 ? 8 : -8) : 0;
+    segs.push({ x, w, y: baseY + dh });
+    x += w;
+  }
+  return segs;
+}
+
+function mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+
+// ---- STARS ----
+function buildStars() {
+  return Array.from({length: 80}, () => ({
+    x: Math.random() * W,
+    y: Math.random() * (H * 0.6),
+    r: Math.random() * 1.5 + 0.3,
+    alpha: Math.random() * 0.6 + 0.2,
+    twinkle: Math.random() * Math.PI * 2
+  }));
+}
+
+// ---- INIT GAME ----
+function initGame() {
+  const palIdx = Math.floor(Math.random() * PALETTES.length);
+  pal = PALETTES[palIdx];
+  obsSeed = Math.floor(Math.random() * 99999);
+  canvas.style.background = pal.bg;
+
+  score = 0; frame = 0; speed = 5;
+  player = createPlayer();
+  obstacles = [];
+  particles = [];
+  stars = buildStars();
+  groundSegments = buildGround(obsSeed);
+
+  updateHUD();
+}
+
+// ---- OBSTACLE SPAWNER (procédural basé sur seed) ----
+let obsTimer = 0, obsInterval = 80;
+const obsRng = mulberry32(Date.now());
+
+function spawnObstacle() {
+  const shape = OBS_SHAPES[Math.floor(obsRng() * OBS_SHAPES.length)];
+  const isHigh = obsRng() > 0.7; // obstacle en hauteur (à esquiver en s'accroupissant)
+  const h = isHigh ? 28 + Math.floor(obsRng() * 20) : 30 + Math.floor(obsRng() * 40);
+  const w = isHigh ? 60 + Math.floor(obsRng() * 40) : 20 + Math.floor(obsRng() * 28);
+  const baseY = H - 50;
+  const y = isHigh ? baseY - 60 - Math.floor(obsRng() * 20) : baseY - h;
+
+  obstacles.push({ x: W + 20, y, w, h, shape, isHigh, glow: obsRng() * Math.PI * 2 });
+}
+
+// ---- PARTICLE ----
+function spawnParticles(x, y, color, n) {
+  for (let i = 0; i < n; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const spd = 1 + Math.random() * 4;
+    particles.push({ x, y, vx: Math.cos(angle)*spd, vy: Math.sin(angle)*spd - 2, alpha:1, color, r: 2+Math.random()*3, life:0, maxLife: 25+Math.floor(Math.random()*20) });
+  }
+}
+
+// ---- DRAW PLAYER ----
+function drawPlayer(p) {
+  const w = p.w, h = p.crouching ? p.h * 0.55 : p.h;
+  const yOff = p.crouching ? (p.h - h) : 0;
+  const px = p.x - w/2, py = p.y - h + yOff;
+
+  // Trail
+  p.trail.forEach((t, i) => {
+    const a = (i / p.trail.length) * 0.35;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = pal.trail;
+    ctx.fillRect(t.x - w/2, t.y - h + yOff, w, h);
+    ctx.restore();
+  });
+
+  // Glow
+  ctx.save();
+  ctx.shadowBlur = 18 + Math.sin(frame * 0.1) * 4;
+  ctx.shadowColor = pal.player;
+
+  // Corps (style cyberpunk minimal)
+  ctx.fillStyle = pal.player;
+  ctx.fillRect(px + 3, py + 3, w - 6, h - 3);
+
+  // Détails tête
+  ctx.fillStyle = pal.bg;
+  ctx.fillRect(px + 8, py + 5, 6, 6); // œil gauche
+  ctx.fillRect(px + w - 14, py + 5, 6, 6); // œil droit
+
+  // Visor
+  ctx.fillStyle = pal.player;
+  ctx.globalAlpha = 0.4;
+  ctx.fillRect(px + 6, py + 8, w - 12, 4);
+
+  ctx.restore();
+
+  // Jambes (animation)
+  if (p.grounded) {
+    const legAnim = Math.sin(frame * 0.35) * 4;
+    ctx.fillStyle = pal.player;
+    ctx.fillRect(px + 4, py + h - 6, 8, 6 + legAnim);
+    ctx.fillRect(px + w - 12, py + h - 6, 8, 6 - legAnim);
+  }
+}
+
+// ---- DRAW OBSTACLE ----
+function drawObstacle(o) {
+  ctx.save();
+  const g = Math.sin(frame * 0.08 + o.glow) * 0.3 + 0.7;
+  ctx.shadowBlur = 14 * g;
+  ctx.shadowColor = pal.obs;
+  ctx.fillStyle = pal.obs;
+  ctx.globalAlpha = g;
+
+  switch(o.shape) {
+    case 'rect':
+      ctx.fillRect(o.x, o.y, o.w, o.h);
+      ctx.fillStyle = pal.bg;
+      ctx.globalAlpha = 0.3;
+      ctx.fillRect(o.x+4, o.y+4, o.w-8, 4);
+      break;
+    case 'cactus':
+      // Tronc
+      ctx.fillStyle = pal.obs;
+      ctx.globalAlpha = g;
+      ctx.fillRect(o.x + o.w/2 - 5, o.y, 10, o.h);
+      // Bras gauche
+      ctx.fillRect(o.x, o.y + o.h * 0.3, o.w/2 - 5, 8);
+      ctx.fillRect(o.x, o.y + o.h * 0.1, 8, o.h * 0.3);
+      // Bras droit
+      ctx.fillRect(o.x + o.w/2 + 5, o.y + o.h * 0.3, o.w/2 - 5, 8);
+      ctx.fillRect(o.x + o.w - 8, o.y + o.h * 0.1, 8, o.h * 0.3);
+      break;
+    case 'saw':
+      ctx.fillStyle = pal.obs;
+      ctx.globalAlpha = g;
+      const cx2 = o.x + o.w/2, cy2 = o.y + o.h/2, r2 = Math.min(o.w, o.h)/2;
+      ctx.save();
+      ctx.translate(cx2, cy2);
+      ctx.rotate(frame * 0.05);
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a1 = (i / 8) * Math.PI * 2;
+        const a2 = ((i + 0.5) / 8) * Math.PI * 2;
+        ctx.lineTo(Math.cos(a1) * r2, Math.sin(a1) * r2);
+        ctx.lineTo(Math.cos(a2) * r2 * 0.55, Math.sin(a2) * r2 * 0.55);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      break;
+    case 'spike':
+      ctx.fillStyle = pal.obs;
+      ctx.globalAlpha = g;
+      const sw = o.w / 3;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(o.x + i * sw, o.y + o.h);
+        ctx.lineTo(o.x + i * sw + sw/2, o.y);
+        ctx.lineTo(o.x + i * sw + sw, o.y + o.h);
+        ctx.closePath();
+        ctx.fill();
+      }
+      break;
+    case 'gate':
+      ctx.fillStyle = pal.obs;
+      ctx.globalAlpha = g;
+      // Deux piliers
+      ctx.fillRect(o.x, o.y, 12, o.h);
+      ctx.fillRect(o.x + o.w - 12, o.y, 12, o.h);
+      // Barre du haut (passage en dessous)
+      ctx.fillRect(o.x, o.y, o.w, 10);
+      break;
+  }
+  ctx.restore();
+}
+
+// ---- GROUND DRAW ----
+function drawGround(scrollX) {
+  ctx.save();
+  ctx.shadowBlur = 8;
+  ctx.shadowColor = pal.ground;
+  ctx.fillStyle = pal.ground;
+  ctx.globalAlpha = 0.85;
+  // Ligne principale
+  ctx.fillRect(0, H - 50, W, 2);
+  // Détails de sol (petits tirets qui défilent)
+  const dashW = 24, gapW = 20, period = dashW + gapW;
+  const offset = scrollX % period;
+  for (let x = -offset; x < W; x += period) {
+    ctx.globalAlpha = 0.3;
+    ctx.fillRect(x, H - 46, dashW, 1);
+  }
+  ctx.restore();
+}
+
+// ---- STARS DRAW ----
+function drawStars() {
+  stars.forEach(s => {
+    s.twinkle += 0.03;
+    const a = s.alpha * (0.6 + 0.4 * Math.sin(s.twinkle));
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = pal.star;
+    ctx.shadowBlur = 4;
+    ctx.shadowColor = pal.star;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+// ---- COLLISION ----
+function checkCollision(p, o) {
+  const ph = p.crouching ? p.h * 0.55 : p.h;
+  const yOff = p.crouching ? (p.h - ph) : 0;
+  const px1 = p.x - p.w/2 + 6, px2 = p.x + p.w/2 - 6;
+  const py1 = p.y - ph + yOff + 4, py2 = p.y + yOff;
+  const ox1 = o.x + 3, ox2 = o.x + o.w - 3;
+  const oy1 = o.y + 3, oy2 = o.y + o.h - 3;
+  return px1 < ox2 && px2 > ox1 && py1 < oy2 && py2 > oy1;
+}
+
+// ---- GROUND Y ----
+function getGroundY() { return H - 50; }
+
+// ---- KEYS ----
+const keys = {};
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (['Space','ArrowUp'].includes(e.code)) e.preventDefault();
+  if (state === 'idle' || state === 'gameover') {
+    if (['Space','ArrowUp'].includes(e.code)) startGame();
+  }
+});
+document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+function startGame() {
+  initGame();
+  state = 'playing';
+  document.getElementById('overlay').classList.add('hidden');
+  loop();
+}
+
+document.getElementById('start-btn').addEventListener('click', () => {
+  if (state === 'idle' || state === 'gameover') startGame();
+});
+
+// ---- GAME OVER ----
+function gameOver() {
+  state = 'gameover';
+  if (score > hiScore) {
+    hiScore = score;
+    localStorage.setItem('runner_hi', hiScore);
+  }
+  spawnParticles(player.x, player.y, pal.obs, 24);
+
+  const ov = document.getElementById('overlay');
+  document.getElementById('ov-tag').textContent = '// game over';
+  document.getElementById('ov-title').textContent = 'GAME OVER';
+  document.getElementById('ov-sub').textContent = `Distance parcourue : ${score} m`;
+  const s = document.getElementById('ov-score');
+  s.style.display = '';
+  s.textContent = score > hiScore ? `🏆 Nouveau record : ${score}` : `Meilleur : ${hiScore}`;
+  document.getElementById('start-btn').textContent = 'REJOUER';
+  ov.classList.remove('hidden');
+}
+
+// ---- UPDATE HUD ----
+function updateHUD() {
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('hi-display').textContent = hiScore;
+  document.getElementById('level-display').textContent = Math.floor(speed / 2);
+}
+
+let scrollX = 0;
+let lastTime = 0;
+
+// ---- MAIN LOOP ----
+function loop(ts) {
+  if (state !== 'playing') return;
+  requestAnimationFrame(loop);
+
+  frame++;
+  score = Math.floor(frame / 6);
+  speed = 5 + score * 0.004; // accélération progressive
+  scrollX += speed;
+
+  // Spawn obstacles
+  obsTimer++;
+  obsInterval = Math.max(40, 90 - score * 0.03);
+  if (obsTimer >= obsInterval) {
+    obsTimer = 0;
+    if (Math.random() > 0.15) spawnObstacle();
+  }
+
+  // Player physics
+  const p = player;
+
+  // Jump
+  if ((keys['ArrowUp'] || keys['Space']) && p.grounded) {
+    p.vy = -14;
+    p.grounded = false;
+    p.jumpCount = 1;
+    spawnParticles(p.x, p.y, pal.player, 6);
+  }
+  // Double jump
+  if ((keys['ArrowUp'] || keys['Space']) && !p.grounded && p.jumpCount === 1 && p.vy > -2) {
+    p.vy = -11;
+    p.jumpCount = 2;
+    spawnParticles(p.x, p.y, pal.player, 4);
+  }
+
+  // Crouch
+  // Crouch removed
+
+  // Gravity
+  p.vy += 0.75;
+  p.y += p.vy;
+
+  const groundY = getGroundY();
+  if (p.y >= groundY) {
+    p.y = groundY;
+    p.vy = 0;
+    p.grounded = true;
+    p.jumpCount = 0;
+  }
+
+  // Trail
+  p.trail.unshift({ x: p.x, y: p.y });
+  if (p.trail.length > 8) p.trail.pop();
+
+  // Move obstacles + collision
+  for (let i = obstacles.length - 1; i >= 0; i--) {
+    obstacles[i].x -= speed;
+    if (obstacles[i].x + obstacles[i].w < 0) { obstacles.splice(i, 1); continue; }
+    if (checkCollision(p, obstacles[i])) { gameOver(); return; }
+  }
+
+  // Particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const pt = particles[i];
+    pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.18;
+    pt.life++;
+    pt.alpha = 1 - pt.life / pt.maxLife;
+    if (pt.life >= pt.maxLife) particles.splice(i, 1);
+  }
+
+  // --- DRAW ---
+  ctx.clearRect(0, 0, W, H);
+
+  // Background gradient
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, pal.bg);
+  bgGrad.addColorStop(1, '#000508');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Scanlines
+  ctx.save();
+  for (let y = 0; y < H; y += 4) {
+    ctx.globalAlpha = 0.03;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, y, W, 1);
+  }
+  ctx.restore();
+
+  drawStars();
+  drawGround(scrollX);
+
+  // Obstacles
+  obstacles.forEach(o => drawObstacle(o));
+
+  // Player
+  drawPlayer(p);
+
+  // Particles
+  particles.forEach(pt => {
+    ctx.save();
+    ctx.globalAlpha = pt.alpha;
+    ctx.fillStyle = pt.color;
+    ctx.shadowBlur = 6; ctx.shadowColor = pt.color;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // HUD update every 10 frames
+  if (frame % 10 === 0) updateHUD();
+
+  // Speed line effect at high speed
+  if (speed > 10) {
+    ctx.save();
+    ctx.globalAlpha = (speed - 10) * 0.008;
+    ctx.strokeStyle = pal.ground;
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 6; i++) {
+      const ly = 60 + Math.random() * (H - 120);
+      ctx.beginPath();
+      ctx.moveTo(W * 0.5, ly);
+      ctx.lineTo(W * 0.5 - 80, ly);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+</script>
+</body>
+</html>

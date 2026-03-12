@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CYBER QUIZ — Game 3</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #08001a;
+    --bg2: #110028;
+    --accent: #a855f7;
+    --accent2: #f472b6;
+    --ok: #39ff14;
+    --ko: #ff3c3c;
+    --text: #e2d9f3;
+    --muted: #7c6c96;
+    --border: rgba(168,85,247,0.25);
+  }
+
+  html, body {
+    min-height: 100%; background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    overflow-x: hidden;
+  }
+
+  body {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    padding: 20px 16px 40px;
+  }
+
+  #back-btn {
+    position: fixed; top: 18px; left: 18px; z-index: 100;
+    font-family: 'Share Tech Mono', monospace; font-size: 0.82rem;
+    color: var(--muted);
+    background: rgba(8,0,26,0.85);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 16px; cursor: pointer; text-decoration: none;
+    transition: all 0.2s; backdrop-filter: blur(10px);
+  }
+  #back-btn:hover { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 14px rgba(168,85,247,0.4); }
+
+  /* HEADER */
+  .quiz-header {
+    margin-top: 60px;
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .quiz-tag {
+    font-size: 0.72rem; letter-spacing: 0.3em; color: var(--muted);
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .quiz-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    font-weight: 900; color: var(--accent);
+    text-shadow: 0 0 40px rgba(168,85,247,0.6);
+    margin-bottom: 6px;
+  }
+  .quiz-sub { font-size: 0.88rem; color: var(--muted); }
+
+  /* PROGRESS */
+  #progress-wrap {
+    width: min(680px, 100%);
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px;
+  }
+  #progress-bar-outer {
+    flex: 1; height: 6px; border-radius: 999px;
+    background: rgba(168,85,247,0.15);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  #progress-bar-inner {
+    height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    box-shadow: 0 0 12px rgba(168,85,247,0.5);
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  #progress-label { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+
+  /* SCORE BAR */
+  #score-bar {
+    width: min(680px, 100%);
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 28px;
+    padding: 10px 18px;
+    background: rgba(17,0,40,0.8);
+    border: 1px solid var(--border); border-radius: 10px;
+    font-size: 0.82rem;
+  }
+  .sb-item { display: flex; gap: 8px; align-items: center; }
+  .sb-dot-ok { width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok); }
+  .sb-dot-ko { width:8px;height:8px;border-radius:50%;background:var(--ko);box-shadow:0 0 8px var(--ko); }
+  .sb-val { font-family:'Orbitron',sans-serif;font-weight:700;font-size:1rem;color:var(--text); }
+  #timer-circle {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 1rem;
+    color: var(--accent);
+    box-shadow: 0 0 14px rgba(168,85,247,0.4);
+    transition: color 0.3s, border-color 0.3s, box-shadow 0.3s;
+  }
+  #timer-circle.urgent { color: var(--ko); border-color: var(--ko); box-shadow: 0 0 14px rgba(255,60,60,0.6); }
+
+  /* QUESTION CARD */
+  #question-card {
+    width: min(680px, 100%);
+    background: rgba(17,0,40,0.9);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px 28px;
+    box-shadow: 0 0 60px rgba(168,85,247,0.1);
+    margin-bottom: 20px;
+    transition: opacity 0.3s;
+  }
+
+  .q-category {
+    font-size: 0.7rem; letter-spacing: 0.2em; color: var(--accent2);
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  .q-text {
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    line-height: 1.6; color: var(--text);
+    margin-bottom: 28px;
+    min-height: 3em;
+  }
+
+  .answers {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+
+  .answer-btn {
+    padding: 14px 16px;
+    background: rgba(168,85,247,0.07);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.88rem;
+    cursor: pointer;
+    text-align: left;
+    line-height: 1.45;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .answer-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(168,85,247,0.12), transparent);
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .answer-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(168,85,247,0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(168,85,247,0.2);
+  }
+  .answer-btn:hover:not(:disabled)::before { opacity: 1; }
+  .answer-btn:disabled { cursor: default; }
+
+  .answer-btn.correct {
+    border-color: var(--ok) !important;
+    background: rgba(57,255,20,0.1) !important;
+    color: var(--ok) !important;
+    box-shadow: 0 0 20px rgba(57,255,20,0.3) !important;
+  }
+  .answer-btn.wrong {
+    border-color: var(--ko) !important;
+    background: rgba(255,60,60,0.1) !important;
+    color: var(--ko) !important;
+  }
+
+  /* FEEDBACK */
+  #feedback {
+    width: min(680px, 100%);
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    display: none;
+    margin-bottom: 16px;
+  }
+  #feedback.show-ok {
+    display: block;
+    background: rgba(57,255,20,0.08);
+    border: 1px solid rgba(57,255,20,0.4);
+    color: var(--ok);
+  }
+  #feedback.show-ko {
+    display: block;
+    background: rgba(255,60,60,0.08);
+    border: 1px solid rgba(255,60,60,0.4);
+    color: #ff7070;
+  }
+
+  #next-btn {
+    display: none;
+    width: min(680px, 100%);
+    padding: 14px;
+    font-family: 'Orbitron', sans-serif; font-size: 0.95rem; font-weight: 700;
+    letter-spacing: 0.08em;
+    background: linear-gradient(135deg, var(--bg2), rgba(168,85,247,0.3));
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 10px; cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(168,85,247,0.2);
+  }
+  #next-btn:hover { background: rgba(168,85,247,0.2); box-shadow: 0 0 40px rgba(168,85,247,0.4); }
+
+  /* RESULTS SCREEN */
+  #results {
+    display: none;
+    width: min(680px, 100%);
+    flex-direction: column; align-items: center;
+    gap: 20px; text-align: center;
+  }
+  .result-circle {
+    width: 120px; height: 120px; border-radius: 50%;
+    border: 3px solid var(--accent);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    box-shadow: 0 0 50px rgba(168,85,247,0.5);
+    margin: 10px auto;
+  }
+  .result-score-big {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.2rem; font-weight: 900; color: var(--accent);
+    line-height: 1;
+  }
+  .result-total { font-size: 0.8rem; color: var(--muted); }
+  .result-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.6rem; font-weight: 700;
+    text-shadow: 0 0 30px rgba(168,85,247,0.6);
+  }
+  .result-msg { font-size: 0.95rem; color: var(--muted); line-height: 1.6; max-width: 420px; }
+  .result-breakdown {
+    width: 100%;
+    background: rgba(17,0,40,0.8);
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px;
+    text-align: left;
+  }
+  .result-breakdown h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem; color: var(--accent2);
+    margin-bottom: 14px; letter-spacing: 0.1em;
+  }
+  .breakdown-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-bottom: 10px; font-size: 0.82rem;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(168,85,247,0.1);
+  }
+  .breakdown-item:last-child { border-bottom: none; margin-bottom: 0; }
+  .bd-icon { flex-shrink: 0; font-size: 0.9rem; margin-top: 1px; }
+  .bd-q { color: var(--muted); margin-bottom: 3px; }
+  .bd-a { color: var(--text); }
+  .bd-correct { color: var(--ok); }
+  .bd-wrong { color: var(--ko); }
+
+  #restart-btn {
+    padding: 14px 48px;
+    font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.1em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #08001a; border: none; border-radius: 999px; cursor: pointer;
+    box-shadow: 0 0 40px rgba(168,85,247,0.4);
+    transition: all 0.3s ease;
+  }
+  #restart-btn:hover { transform: scale(1.05); box-shadow: 0 0 60px rgba(168,85,247,0.7); }
+
+  /* START SCREEN */
+  #start-screen {
+    width: min(680px, 100%);
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  .start-info {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;
+    width: 100%;
+  }
+  .start-info-box {
+    background: rgba(17,0,40,0.8);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 10px; text-align: center;
+  }
+  .sib-icon { font-size: 1.6rem; margin-bottom: 6px; }
+  .sib-label { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; }
+  .sib-val { font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; color: var(--accent); margin-top: 2px; }
+  #begin-btn {
+    padding: 14px 56px;
+    font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.1em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #08001a; border: none; border-radius: 999px; cursor: pointer;
+    box-shadow: 0 0 40px rgba(168,85,247,0.4);
+    transition: all 0.3s ease; margin-top: 8px;
+  }
+  #begin-btn:hover { transform: scale(1.05); box-shadow: 0 0 60px rgba(168,85,247,0.7); }
+
+  @media (max-width: 540px) {
+    .answers { grid-template-columns: 1fr; }
+    .start-info { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<a href="index.html?hub=1" id="back-btn">← Retour</a>
+
+<div class="quiz-header">
+  <div class="quiz-tag">// cybersecurity knowledge test</div>
+  <div class="quiz-title">CYBER QUIZ</div>
+  <div class="quiz-sub">20 questions · niveau découverte · thèmes variés</div>
+</div>
+
+<!-- START SCREEN -->
+<div id="start-screen">
+  <div class="start-info">
+    <div class="start-info-box">
+      <div class="sib-icon">📋</div>
+      <div class="sib-label">Questions</div>
+      <div class="sib-val">20</div>
+    </div>
+    <div class="start-info-box">
+      <div class="sib-icon">⏱️</div>
+      <div class="sib-label">Par question</div>
+      <div class="sib-val">20 sec</div>
+    </div>
+    <div class="start-info-box">
+      <div class="sib-icon">🔐</div>
+      <div class="sib-label">Thème</div>
+      <div class="sib-val">Cyber</div>
+    </div>
+  </div>
+  <p style="font-size:0.88rem;color:var(--muted);max-width:420px;line-height:1.6;text-align:center">
+    Teste tes connaissances en cybersécurité : mots de passe, phishing, réseaux, malwares, bonnes pratiques et plus encore.
+  </p>
+  <button id="begin-btn">COMMENCER</button>
+</div>
+
+<!-- QUIZ ZONE -->
+<div id="quiz-zone" style="display:none;width:min(680px,100%);flex-direction:column;align-items:center;gap:0">
+
+  <div id="progress-wrap">
+    <div id="progress-bar-outer"><div id="progress-bar-inner"></div></div>
+    <div id="progress-label">0 / 20</div>
+  </div>
+
+  <div id="score-bar">
+    <div class="sb-item"><div class="sb-dot-ok"></div><span>Bonnes : </span><span class="sb-val" id="good-count">0</span></div>
+    <div id="timer-circle">20</div>
+    <div class="sb-item"><div class="sb-dot-ko"></div><span>Fausses : </span><span class="sb-val" id="bad-count">0</span></div>
+  </div>
+
+  <div id="question-card">
+    <div class="q-category" id="q-category"></div>
+    <div class="q-text" id="q-text"></div>
+    <div class="answers" id="answers"></div>
+  </div>
+
+  <div id="feedback"></div>
+  <button id="next-btn">Question suivante →</button>
+</div>
+
+<!-- RESULTS -->
+<div id="results">
+  <div class="result-circle">
+    <div class="result-score-big" id="r-score"></div>
+    <div class="result-total">/20</div>
+  </div>
+  <div class="result-title" id="r-title"></div>
+  <div class="result-msg" id="r-msg"></div>
+  <div class="result-breakdown">
+    <h3>RÉCAPITULATIF</h3>
+    <div id="r-breakdown"></div>
+  </div>
+  <button id="restart-btn">REJOUER</button>
+</div>
+
+<script>
+// ---- QUESTIONS BANK (30 questions, on en tire 20 aléatoirement) ----
+const ALL_QUESTIONS = [
+  {
+    cat: "Mots de passe",
+    q: "Quelle est la longueur minimale recommandée pour un mot de passe sécurisé ?",
+    answers: ["6 caractères", "8 caractères", "12 caractères", "4 caractères"],
+    correct: 2,
+    expl: "12 caractères minimum est recommandé par l'ANSSI. Plus c'est long, plus c'est sûr."
+  },
+  {
+    cat: "Phishing",
+    q: "Qu'est-ce que le phishing ?",
+    answers: ["Une technique pour pêcher des données via de faux emails", "Un type de virus informatique", "Un logiciel de chiffrement", "Un protocole réseau sécurisé"],
+    correct: 0,
+    expl: "Le phishing (hameçonnage) consiste à usurper l'identité d'un organisme pour voler des informations via des messages frauduleux."
+  },
+  {
+    cat: "Réseaux",
+    q: "Que signifie HTTPS dans une URL ?",
+    answers: ["Connexion standard", "Connexion chiffrée et authentifiée", "Connexion rapide", "Connexion sans mot de passe"],
+    correct: 1,
+    expl: "HTTPS utilise TLS pour chiffrer les données échangées entre le navigateur et le serveur."
+  },
+  {
+    cat: "Malwares",
+    q: "Qu'est-ce qu'un ransomware ?",
+    answers: ["Un logiciel espion", "Un logiciel qui chiffre les fichiers et demande une rançon", "Un virus qui efface les données", "Un outil de phishing"],
+    correct: 1,
+    expl: "Un ransomware chiffre les données de la victime et réclame une rançon pour la clé de déchiffrement."
+  },
+  {
+    cat: "Authentification",
+    q: "Que signifie MFA (ou 2FA) ?",
+    answers: ["Mot de passe fort avancé", "Authentification multi-facteurs", "Méthode de filtrage anti-spam", "Modèle de firewall avancé"],
+    correct: 1,
+    expl: "L'authentification multi-facteurs (MFA) combine plusieurs méthodes de vérification pour renforcer la sécurité."
+  },
+  {
+    cat: "Réseaux",
+    q: "Quel port utilise par défaut le protocole HTTPS ?",
+    answers: ["80", "21", "443", "8080"],
+    correct: 2,
+    expl: "Le port 443 est le port standard pour les connexions HTTPS."
+  },
+  {
+    cat: "Bonnes pratiques",
+    q: "Que doit-on faire si on reçoit un email suspect demandant de cliquer sur un lien ?",
+    answers: ["Cliquer pour voir ce que c'est", "Répondre pour demander des précisions", "Ignorer / Signaler comme spam", "Transférer à ses collègues"],
+    correct: 2,
+    expl: "Face à un email suspect, ne jamais cliquer sur les liens ni télécharger les pièces jointes. Signaler comme phishing."
+  },
+  {
+    cat: "Malwares",
+    q: "Qu'est-ce qu'un cheval de Troie (Trojan) ?",
+    answers: ["Un programme qui se cache dans un logiciel légitime", "Un virus qui se propage par email", "Un ransomware ciblant les serveurs", "Un outil d'analyse réseau"],
+    correct: 0,
+    expl: "Un trojan se présente comme un programme légitime mais exécute des actions malveillantes en arrière-plan."
+  },
+  {
+    cat: "Chiffrement",
+    q: "Que chiffre un VPN ?",
+    answers: ["Uniquement les emails", "Tout le trafic réseau entre l'appareil et le serveur VPN", "Les fichiers sur le disque dur", "Les mots de passe stockés"],
+    correct: 1,
+    expl: "Un VPN crée un tunnel chiffré pour tout le trafic réseau, masquant votre activité et votre adresse IP réelle."
+  },
+  {
+    cat: "Mots de passe",
+    q: "Quelle est la meilleure façon de gérer plusieurs mots de passe complexes ?",
+    answers: ["Les noter sur un post-it", "Utiliser le même mot de passe partout", "Utiliser un gestionnaire de mots de passe", "Les mémoriser tous"],
+    correct: 2,
+    expl: "Un gestionnaire de mots de passe (Bitwarden, KeePass...) stocke et génère des mots de passe uniques et complexes en toute sécurité."
+  },
+  {
+    cat: "Réseaux",
+    q: "Qu'est-ce qu'un firewall (pare-feu) ?",
+    answers: ["Un logiciel antivirus", "Un système qui filtre le trafic réseau entrant/sortant", "Un protocole de chiffrement", "Un type d'attaque réseau"],
+    correct: 1,
+    expl: "Un firewall analyse et filtre les connexions réseau selon des règles prédéfinies pour bloquer les accès non autorisés."
+  },
+  {
+    cat: "Attaques",
+    q: "Qu'est-ce qu'une attaque par force brute ?",
+    answers: ["Une attaque physique sur un serveur", "Essayer systematiquement toutes les combinaisons possibles", "Un malware qui détruit des fichiers", "Une attaque via Wi-Fi public"],
+    correct: 1,
+    expl: "La force brute consiste à tester automatiquement toutes les combinaisons de mots de passe jusqu'à trouver le bon."
+  },
+  {
+    cat: "Mots de passe",
+    q: "Lequel de ces mots de passe est le plus sécurisé ?",
+    answers: ["motdepasse123", "P@ssw0rd", "Tr0ubadour#Café!42", "123456789"],
+    correct: 2,
+    expl: "Tr0ubadour#Café!42 est long, utilise majuscules, minuscules, chiffres et caractères spéciaux — idéalement généré aléatoirement."
+  },
+  {
+    cat: "Bonnes pratiques",
+    q: "Que signifie une mise à jour de sécurité ?",
+    answers: ["Une amélioration de l'interface utilisateur", "Un correctif pour des failles de sécurité découvertes", "Une mise à niveau payante", "Un changement de mot de passe forcé"],
+    correct: 1,
+    expl: "Les mises à jour de sécurité corrigent des vulnérabilités. Ne pas les installer expose le système à des attaques exploitant ces failles."
+  },
+  {
+    cat: "Réseaux",
+    q: "Le Wi-Fi public (café, hôtel) est-il sûr pour des opérations sensibles ?",
+    answers: ["Oui, c'est chiffré par défaut", "Oui si le réseau a un mot de passe", "Non, le trafic peut être intercepté", "Oui si on utilise HTTPS"],
+    correct: 2,
+    expl: "Le Wi-Fi public peut être intercepté (attaque MITM). Utiliser un VPN ou éviter toute opération sensible sur ces réseaux."
+  },
+  {
+    cat: "Attaques",
+    q: "Qu'est-ce qu'une attaque DDoS ?",
+    answers: ["Un vol de données par phishing", "Saturer un serveur avec des millions de requêtes pour le rendre indisponible", "Un ransomware ciblant les bases de données", "Un exploit de faille zero-day"],
+    correct: 1,
+    expl: "Le DDoS (Distributed Denial of Service) surcharge un service avec du trafic massif pour le rendre inaccessible."
+  },
+  {
+    cat: "Chiffrement",
+    q: "Qu'est-ce que le chiffrement de bout en bout (end-to-end) ?",
+    answers: ["Les données sont chiffrées uniquement sur le serveur", "Seuls l'expéditeur et le destinataire peuvent lire le message", "Le chiffrement du disque dur uniquement", "Un protocole VPN propriétaire"],
+    correct: 1,
+    expl: "Le chiffrement E2E garantit que seuls les participants à la conversation peuvent déchiffrer les messages (ex: Signal, WhatsApp)."
+  },
+  {
+    cat: "Ingénierie sociale",
+    q: "Qu'est-ce que l'ingénierie sociale en cybersécurité ?",
+    answers: ["Concevoir des systèmes sécurisés", "Manipuler psychologiquement une personne pour obtenir des informations", "Programmer des algorithmes de sécurité", "Analyser le code source d'un virus"],
+    correct: 1,
+    expl: "L'ingénierie sociale exploite la psychologie humaine (confiance, peur, urgence) plutôt que les failles techniques."
+  },
+  {
+    cat: "Bonnes pratiques",
+    q: "Que faire lorsqu'on quitte son poste de travail dans un open-space ?",
+    answers: ["Laisser la session ouverte si on revient vite", "Verrouiller la session (Win+L / Cmd+Ctrl+Q)", "Éteindre complètement l'ordinateur", "Fermer uniquement les fenêtres sensibles"],
+    correct: 1,
+    expl: "Verrouiller sa session (Win+L) prend une seconde et empêche toute personne de passage d'accéder à vos données."
+  },
+  {
+    cat: "Malwares",
+    q: "Qu'est-ce qu'un keylogger ?",
+    answers: ["Un logiciel qui enregistre chaque touche tapée au clavier", "Un outil de gestion de mots de passe", "Un type de firewall", "Un programme de sauvegarde"],
+    correct: 0,
+    expl: "Un keylogger enregistre silencieusement toutes les frappes clavier et peut ainsi voler mots de passe, numéros de carte, etc."
+  },
+  {
+    cat: "Réseaux",
+    q: "Que signifie l'adresse IP 192.168.x.x ?",
+    answers: ["Une adresse IP publique", "Une adresse IP privée (réseau local)", "L'adresse du serveur DNS Google", "L'adresse du routeur principal d'un FAI"],
+    correct: 1,
+    expl: "192.168.x.x est une plage d'adresses IP privées (RFC 1918), utilisée dans les réseaux locaux (LAN)."
+  },
+  {
+    cat: "Chiffrement",
+    q: "Qu'est-ce qu'un certificat SSL/TLS ?",
+    answers: ["Un antivirus pour serveurs web", "Un document qui authentifie un site et chiffre les échanges", "Un protocole de routage réseau", "Un type de mot de passe administrateur"],
+    correct: 1,
+    expl: "Le certificat SSL/TLS est délivré par une autorité de certification et permet d'authentifier le site et de chiffrer les données (HTTPS)."
+  },
+  {
+    cat: "Attaques",
+    q: "Qu'est-ce qu'une faille zero-day ?",
+    answers: ["Une faille connue depuis longtemps non corrigée", "Une vulnérabilité inconnue du fabricant, sans correctif disponible", "Un bug qui apparaît au premier démarrage", "Une faille corrigée en moins d'un jour"],
+    correct: 1,
+    expl: "Une faille zero-day est inconnue du développeur/éditeur. Elle peut être exploitée avant qu'un patch soit disponible."
+  },
+  {
+    cat: "Bonnes pratiques",
+    q: "Quelle information NE doit PAS être partagée publiquement sur les réseaux sociaux ?",
+    answers: ["Ses centres d'intérêt", "Son adresse postale complète", "Ses films préférés", "Le nom de sa ville"],
+    correct: 1,
+    expl: "L'adresse postale complète est une donnée sensible qui peut faciliter des arnaques, du stalking ou du vol par courrier."
+  },
+  {
+    cat: "Malwares",
+    q: "Comment un vers (worm) se propage-t-il différemment d'un virus classique ?",
+    answers: ["Il nécessite toujours une intervention humaine", "Il se propage automatiquement sans fichier hôte", "Il ne cible que les systèmes Windows", "Il se cache uniquement dans les emails"],
+    correct: 1,
+    expl: "Un ver se propage de façon autonome via le réseau, sans nécessiter d'action utilisateur ni de fichier hôte (ex: WannaCry)."
+  },
+  {
+    cat: "Authentification",
+    q: "Pourquoi ne faut-il pas réutiliser le même mot de passe sur plusieurs sites ?",
+    answers: ["C'est plus difficile à mémoriser", "Si un site est compromis, tous vos comptes sont en danger (credential stuffing)", "C'est interdit par la loi", "Les sites le détectent et bloquent le compte"],
+    correct: 1,
+    expl: "Le credential stuffing consiste à utiliser des identifiants volés sur un site pour accéder à d'autres services."
+  },
+  {
+    cat: "Bonnes pratiques",
+    q: "Qu'est-ce qu'une sauvegarde 3-2-1 ?",
+    answers: ["3 antivirus, 2 firewalls, 1 VPN", "3 copies, sur 2 supports différents, dont 1 hors site", "3 mots de passe, 2 facteurs, 1 biométrie", "3 sauvegardes par jour, 2 semaines de rétention, 1 cloud"],
+    correct: 1,
+    expl: "La règle 3-2-1 est un standard de sauvegarde : 3 copies de données, sur 2 types de supports différents, dont 1 hors site."
+  },
+  {
+    cat: "Réseaux",
+    q: "À quoi sert un DNS ?",
+    answers: ["À chiffrer les connexions réseau", "À traduire les noms de domaine en adresses IP", "À attribuer des adresses IP automatiquement", "À filtrer les contenus web"],
+    correct: 1,
+    expl: "Le DNS (Domain Name System) traduit les noms de domaine (ex: google.com) en adresses IP pour établir les connexions."
+  },
+  {
+    cat: "Attaques",
+    q: "Qu'est-ce qu'une attaque Man-in-the-Middle (MITM) ?",
+    answers: ["Un attaquant s'interpose entre deux parties pour intercepter/modifier les communications", "Une attaque ciblant les serveurs DNS", "Un virus qui se copie dans la mémoire RAM", "Un exploit de mot de passe par dictionnaire"],
+    correct: 0,
+    expl: "Une attaque MITM positionne l'attaquant entre la victime et le serveur, lui permettant d'espionner ou d'altérer les communications."
+  },
+  {
+    cat: "Chiffrement",
+    q: "Qu'est-ce que le hachage (hash) d'un mot de passe ?",
+    answers: ["Le chiffrer avec une clé secrète", "Le transformer en empreinte irréversible pour le stocker sans le révéler", "Le compresser pour gagner de l'espace", "Le dupliquer sur plusieurs serveurs"],
+    correct: 1,
+    expl: "Le hachage (SHA-256, bcrypt...) transforme un mot de passe en empreinte unique et irréversible. Les bases de données stockent le hash, jamais le mot de passe en clair."
+  },
+];
+
+// ---- QUIZ STATE ----
+let questions = [];
+let currentIdx = 0;
+let goodCount = 0, badCount = 0;
+let answered = false;
+let timerInterval = null;
+let timeLeft = 20;
+let userAnswers = [];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  questions = shuffle(ALL_QUESTIONS).slice(0, 20);
+  // Shuffle answers too (while tracking correct)
+  questions = questions.map(q => {
+    const pairs = q.answers.map((a, i) => ({ text: a, isCorrect: i === q.correct }));
+    const shuffled = shuffle(pairs);
+    return {
+      ...q,
+      answers: shuffled.map(p => p.text),
+      correct: shuffled.findIndex(p => p.isCorrect)
+    };
+  });
+
+  currentIdx = 0; goodCount = 0; badCount = 0; userAnswers = [];
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  const qz = document.getElementById('quiz-zone');
+  qz.style.display = 'flex';
+  showQuestion();
+}
+
+function showQuestion() {
+  answered = false;
+  clearInterval(timerInterval);
+  timeLeft = 20;
+
+  const q = questions[currentIdx];
+
+  // Progress
+  const pct = (currentIdx / 20) * 100;
+  document.getElementById('progress-bar-inner').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `${currentIdx} / 20`;
+  document.getElementById('good-count').textContent = goodCount;
+  document.getElementById('bad-count').textContent = badCount;
+
+  // Timer
+  const timerEl = document.getElementById('timer-circle');
+  timerEl.textContent = timeLeft;
+  timerEl.classList.remove('urgent');
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    timerEl.textContent = timeLeft;
+    if (timeLeft <= 5) timerEl.classList.add('urgent');
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      if (!answered) handleAnswer(-1); // timeout → wrong
+    }
+  }, 1000);
+
+  // Question
+  document.getElementById('q-category').textContent = `// ${q.cat}`;
+  document.getElementById('q-text').textContent = q.q;
+
+  // Answers
+  const answersEl = document.getElementById('answers');
+  answersEl.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  q.answers.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.innerHTML = `<strong>${letters[i]}.</strong> ${a}`;
+    btn.addEventListener('click', () => handleAnswer(i));
+    answersEl.appendChild(btn);
+  });
+
+  // Reset feedback / next
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback';
+  fb.style.display = 'none';
+  document.getElementById('next-btn').style.display = 'none';
+
+  // Animate card
+  const card = document.getElementById('question-card');
+  card.style.opacity = '0';
+  setTimeout(() => { card.style.opacity = '1'; card.style.transition = 'opacity 0.3s'; }, 50);
+}
+
+function handleAnswer(selected) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const q = questions[currentIdx];
+  const isCorrect = selected === q.correct;
+  const fb = document.getElementById('feedback');
+
+  // Color buttons
+  const btns = document.querySelectorAll('.answer-btn');
+  btns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.correct) btn.classList.add('correct');
+    else if (i === selected && !isCorrect) btn.classList.add('wrong');
+  });
+
+  if (isCorrect) {
+    goodCount++;
+    fb.className = 'show-ok';
+    fb.innerHTML = `✔ Correct ! — ${q.expl}`;
+  } else {
+    badCount++;
+    fb.className = 'show-ko';
+    const correctText = selected === -1
+      ? `⏱ Temps écoulé !`
+      : `✘ Incorrect.`;
+    fb.innerHTML = `${correctText} La bonne réponse est : <strong>${q.answers[q.correct]}</strong><br><span style="opacity:0.8;font-size:0.82rem">${q.expl}</span>`;
+  }
+
+  userAnswers.push({ q: q.q, userIdx: selected, correctIdx: q.correct, answers: q.answers, correct: isCorrect });
+
+  document.getElementById('good-count').textContent = goodCount;
+  document.getElementById('bad-count').textContent = badCount;
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'block';
+  nextBtn.textContent = currentIdx < 19 ? 'Question suivante →' : 'Voir les résultats →';
+}
+
+document.getElementById('next-btn').addEventListener('click', () => {
+  currentIdx++;
+  if (currentIdx >= 20) {
+    showResults();
+  } else {
+    showQuestion();
+  }
+});
+
+function showResults() {
+  clearInterval(timerInterval);
+  document.getElementById('quiz-zone').style.display = 'none';
+  const res = document.getElementById('results');
+  res.style.display = 'flex';
+
+  document.getElementById('r-score').textContent = goodCount;
+
+  const pct = (goodCount / 20) * 100;
+  let title, msg, color;
+  if (pct >= 90) { title = '🏆 EXPERT'; msg = "Exceptionnel ! Tu maîtrises la cybersécurité à un niveau impressionnant."; color = 'var(--ok)'; }
+  else if (pct >= 70) { title = '🔥 CONFIRMÉ'; msg = "Très bon résultat ! Tu as de solides bases en cybersécurité."; color = 'var(--accent)'; }
+  else if (pct >= 50) { title = '📚 EN PROGRESSION'; msg = "Pas mal ! Continue d'approfondir tes connaissances — tu es sur la bonne voie."; color = 'var(--accent2)'; }
+  else { title = '🔓 DÉBUTANT'; msg = "Il reste du chemin ! La cybersécurité demande de la pratique — rejoue pour t'améliorer."; color = 'var(--ko)'; }
+
+  const rt = document.getElementById('r-title');
+  rt.textContent = title;
+  rt.style.color = color;
+  document.getElementById('r-msg').textContent = msg;
+  document.querySelector('.result-circle').style.borderColor = color;
+  document.querySelector('.result-circle').style.boxShadow = `0 0 50px ${color}80`;
+  document.querySelector('.result-score-big').style.color = color;
+
+  // Breakdown
+  const bd = document.getElementById('r-breakdown');
+  bd.innerHTML = '';
+  userAnswers.forEach((ua, i) => {
+    const div = document.createElement('div');
+    div.className = 'breakdown-item';
+    const icon = ua.correct ? '✔' : '✘';
+    const iconClass = ua.correct ? 'bd-icon bd-correct' : 'bd-icon bd-wrong';
+    const userAns = ua.userIdx === -1 ? '⏱ Temps écoulé' : ua.answers[ua.userIdx];
+    div.innerHTML = `
+      <span class="${iconClass}">${icon}</span>
+      <div>
+        <div class="bd-q">Q${i+1}. ${ua.q}</div>
+        ${!ua.correct ? `<div class="bd-a bd-ko">Ta réponse : ${userAns}</div>` : ''}
+        <div class="bd-a bd-correct">Bonne réponse : ${ua.answers[ua.correctIdx]}</div>
+      </div>`;
+    bd.appendChild(div);
+  });
+}
+
+document.getElementById('begin-btn').addEventListener('click', startQuiz);
+document.getElementById('restart-btn').addEventListener('click', startQuiz);
+</script>
+</body>
+</html>
