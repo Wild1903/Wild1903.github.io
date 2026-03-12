@@ -669,5 +669,16 @@
 
     revealEls.forEach(el => revealObserver.observe(el));
   </script>
+
+  <!-- BANDEAU "MIEUX SUR PC" — visible uniquement touch sans clavier -->
+  <div id="pc-hint" onclick="this.style.animation='pc-hint-out 0.3s ease forwards';setTimeout(()=>this.remove(),300)">
+    💻 <span>L'expérience est mieux sur PC</span> 😉
+    <span class="pc-hint-close">✕</span>
+  </div>
+  <style>
+    @keyframes pc-hint-out {
+      to { opacity: 0; transform: translateX(-50%) translateY(12px); }
+    }
+  </style>
 </body>
 </html>
