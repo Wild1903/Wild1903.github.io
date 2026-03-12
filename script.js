@@ -1,3 +1,41 @@
+// === DÉTECTION CLAVIER PHYSIQUE ===
+// Sur desktop : clavier toujours présent → activer immédiatement
+// Sur mobile/tablette : activer seulement si un vrai clavier est détecté
+(function detectKeyboard() {
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+  if (!isTouchDevice) {
+    // Desktop pur → clavier dispo d'emblée
+    document.documentElement.classList.add('has-keyboard');
+    return;
+  }
+
+  // Appareil touch : écouter le premier vrai appui clavier
+  // (les claviers virtuels ne déclenchent pas keydown de la même façon)
+  let detected = false;
+  const onKey = (e) => {
+    if (detected) return;
+    // Ignorer les touches virtuelles typiques (tab, enter simulés par formulaires)
+    // Un vrai clavier physique envoie une KeyboardEvent avec code non-vide
+    if (e.code && e.code !== '') {
+      detected = true;
+      document.documentElement.classList.add('has-keyboard');
+      window.removeEventListener('keydown', onKey);
+    }
+  };
+  window.addEventListener('keydown', onKey);
+
+  // Écouter aussi la connexion de périphériques (API non dispo partout, fallback silencieux)
+  if (navigator.keyboard) {
+    navigator.keyboard.addEventListener?.('layoutchange', () => {
+      if (!detected) {
+        detected = true;
+        document.documentElement.classList.add('has-keyboard');
+      }
+    });
+  }
+})();
+
 // === MOTEUR 3D THREE.JS (APPLE-STYLE) ===
 let scene, camera, renderer, nodes = [], links = [], particles = [];
 
@@ -210,7 +248,16 @@ function startHeroTyping() {
 
 // === INITIALISATION ===
 document.addEventListener("DOMContentLoaded", () => {
-  init3D();
+  // Three.js 3D uniquement sur desktop ou clavier détecté (perf mobile)
+  const isTouchOnly = ('ontouchstart' in window) && (navigator.maxTouchPoints > 0)
+                      && !document.documentElement.classList.contains('has-keyboard');
+  if (!isTouchOnly) {
+    init3D();
+  } else {
+    // Masquer le canvas 3D sur mobile sans clavier
+    const c = document.getElementById('cyber-canvas');
+    if (c) c.style.display = 'none';
+  }
 
   const bootScreen = document.getElementById("boot-screen");
   const portfolio  = document.getElementById("portfolio");
