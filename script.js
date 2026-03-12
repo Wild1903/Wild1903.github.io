@@ -329,11 +329,17 @@ document.addEventListener("submit", (e) => {
 });
 // === GAME HUB — touche M ===
 document.addEventListener("keydown", (e) => {
-  if (e.key === "m" || e.key === "M") {
-    // Ignorer si on tape dans un input / textarea
-    const tag = document.activeElement?.tagName;
-    if (tag === "INPUT" || tag === "TEXTAREA") return;
+  // Ignorer si le focus est dans n'importe quel champ de saisie
+  const active = document.activeElement;
+  const inField = active && (
+    active.tagName === "INPUT" ||
+    active.tagName === "TEXTAREA" ||
+    active.tagName === "SELECT" ||
+    active.isContentEditable
+  );
 
+  if (e.key === "m" || e.key === "M") {
+    if (inField) return;
     const hub = document.getElementById("game-hub");
     if (!hub) return;
     hub.classList.toggle("open");
