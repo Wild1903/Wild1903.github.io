@@ -255,10 +255,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!isTouchOnly) {
     init3D();
   } else {
-    // Masquer le canvas 3D sur mobile sans clavier
     const c = document.getElementById('cyber-canvas');
     if (c) c.style.display = 'none';
   }
+
+  // Zoom fond d'écran au scroll
+  initBgZoom();
 
   const bootScreen = document.getElementById("boot-screen");
   const portfolio  = document.getElementById("portfolio");
@@ -376,24 +378,20 @@ document.addEventListener("click", (e) => {
 });
 
 // === ZOOM FOND D'ÉCRAN AU SCROLL ===
-// Lancé dans DOMContentLoaded pour que le DOM soit prêt
-document.addEventListener("DOMContentLoaded", function() {
+// Intégré directement — pas de DOMContentLoaded séparé (script chargé après DOM)
+function initBgZoom() {
   const bg = document.getElementById("bg-image");
   if (!bg) return;
-
   const SCALE_MIN = 1.0;
   const SCALE_MAX = 1.18;
-
-  function updateBgZoom() {
-    const scrollY    = window.scrollY || window.pageYOffset;
-    const maxScroll  = document.documentElement.scrollHeight - window.innerHeight;
+  function update() {
+    const scrollY   = window.scrollY || window.pageYOffset;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     if (maxScroll <= 0) { bg.style.transform = "scale(1)"; return; }
-    const progress   = Math.min(scrollY / maxScroll, 1);
-    const scale      = SCALE_MIN + (SCALE_MAX - SCALE_MIN) * progress;
-    bg.style.transform = "scale(" + scale + ")";
+    const t = Math.min(scrollY / maxScroll, 1);
+    bg.style.transform = "scale(" + (SCALE_MIN + (SCALE_MAX - SCALE_MIN) * t) + ")";
   }
-
-  window.addEventListener("scroll", updateBgZoom, { passive: true });
-  window.addEventListener("resize", updateBgZoom, { passive: true });
-  updateBgZoom();
-});
+  window.addEventListener("scroll", update, { passive: true });
+  window.addEventListener("resize", update, { passive: true });
+  update();
+}
