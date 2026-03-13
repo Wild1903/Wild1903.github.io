@@ -380,20 +380,18 @@ document.addEventListener("click", (e) => {
   const bg = document.getElementById("bg-image");
   if (!bg) return;
 
-  const SCALE_MIN = 1.0;   // taille au top de la page
-  const SCALE_MAX = 1.25;  // taille maximale en bas de page
+  const SCALE_MIN = 1.0;
+  const SCALE_MAX = 1.15;
 
   let rafPending = false;
 
   function updateBgZoom() {
     rafPending = false;
     const scrollY   = window.scrollY || window.pageYOffset;
-    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-    if (maxScroll <= 0) return;
-
-    const progress = Math.min(scrollY / maxScroll, 1); // 0 → 1
-    const scale    = SCALE_MIN + (SCALE_MAX - SCALE_MIN) * progress;
-    bg.style.transform = `scale(${scale})`;
+    const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const progress  = Math.min(scrollY / maxScroll, 1);
+    const scale     = SCALE_MIN + (SCALE_MAX - SCALE_MIN) * progress;
+    bg.style.transform = "scale(" + scale + ")";
   }
 
   window.addEventListener("scroll", () => {
@@ -403,6 +401,8 @@ document.addEventListener("click", (e) => {
     }
   }, { passive: true });
 
-  // Init au chargement
+  // Aussi au resize (la hauteur totale change)
+  window.addEventListener("resize", updateBgZoom, { passive: true });
+
   updateBgZoom();
 })();
