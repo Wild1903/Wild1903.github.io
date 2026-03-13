@@ -498,7 +498,7 @@
               this.orbitAngle = Math.atan2(this.y - mouse.y, this.x - mouse.x);
               // Orbites concentriques : on divise l'espace en anneaux de 25px à partir de 44px
               // chaque slot d'orbite a son propre rayon fixe
-              this.orbitR     = 44 + currentOrbiters * 22;
+              this.orbitR     = 20 + currentOrbiters * 10;
               this.orbitSpeed = -(0.014 + Math.random() * 0.012); // anti-horaire, vitesse légèrement variable
               this.cx = mouse.x; this.cy = mouse.y;
               this.vx = 0; this.vy = 0;
