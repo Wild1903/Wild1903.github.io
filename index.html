@@ -410,7 +410,7 @@
     window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; });
 
     const COLORS  = ['#a855f7','#c084fc','#f472b6','#e879f9','#7c3aed','#db2777'];
-    const MAX_ORB = 20;   // max orbitales simultanées
+    const MAX_ORB = 15;   // max orbitales simultanées
     const COUNT   = 140;  // particules de fond couvrant tout l'écran
 
     class BgParticle {
@@ -490,8 +490,8 @@
               // Capture → devient orbitale
               this.orbit      = true;
               this.orbitAngle = Math.atan2(this.y - mouse.y, this.x - mouse.x);
-              this.orbitR     = 36 + Math.random() * 60;
-              this.orbitSpeed = (0.020 + Math.random() * 0.020) * (Math.random() < 0.5 ? 1 : -1);
+              this.orbitR     = 40 + Math.random() * 56; // min 40px — ne touche jamais le curseur
+              this.orbitSpeed = -(0.020 + Math.random() * 0.020); // toujours négatif = sens anti-horaire
               this.cx = mouse.x; this.cy = mouse.y;
               this.life = 0; this.fadeIn = 0; this.fadeOut = 1;
             } else {
