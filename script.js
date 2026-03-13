@@ -376,33 +376,24 @@ document.addEventListener("click", (e) => {
 });
 
 // === ZOOM FOND D'ÉCRAN AU SCROLL ===
-(function() {
+// Lancé dans DOMContentLoaded pour que le DOM soit prêt
+document.addEventListener("DOMContentLoaded", function() {
   const bg = document.getElementById("bg-image");
   if (!bg) return;
 
   const SCALE_MIN = 1.0;
-  const SCALE_MAX = 1.15;
-
-  let rafPending = false;
+  const SCALE_MAX = 1.18;
 
   function updateBgZoom() {
-    rafPending = false;
-    const scrollY   = window.scrollY || window.pageYOffset;
-    const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-    const progress  = Math.min(scrollY / maxScroll, 1);
-    const scale     = SCALE_MIN + (SCALE_MAX - SCALE_MIN) * progress;
+    const scrollY    = window.scrollY || window.pageYOffset;
+    const maxScroll  = document.documentElement.scrollHeight - window.innerHeight;
+    if (maxScroll <= 0) { bg.style.transform = "scale(1)"; return; }
+    const progress   = Math.min(scrollY / maxScroll, 1);
+    const scale      = SCALE_MIN + (SCALE_MAX - SCALE_MIN) * progress;
     bg.style.transform = "scale(" + scale + ")";
   }
 
-  window.addEventListener("scroll", () => {
-    if (!rafPending) {
-      rafPending = true;
-      requestAnimationFrame(updateBgZoom);
-    }
-  }, { passive: true });
-
-  // Aussi au resize (la hauteur totale change)
+  window.addEventListener("scroll", updateBgZoom, { passive: true });
   window.addEventListener("resize", updateBgZoom, { passive: true });
-
   updateBgZoom();
-})();
+});
