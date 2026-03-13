@@ -568,8 +568,14 @@
 
     const bgParticles = Array.from({ length: COUNT }, (_, i) => new BgParticle(true));
 
-    // Souris hors de la page → désactiver l'attraction et libérer doucement les orbitales
-    document.addEventListener('mouseleave', () => {
+    // Souris hors fenêtre → désactiver attraction + libérer les orbitales
+    window.addEventListener('mouseout', (e) => {
+      if (!e.relatedTarget && !e.toElement) {
+        mouse.active = false;
+        bgParticles.forEach(p => { if (p.orbit && !p.dying) p.forceRelease(); });
+      }
+    });
+    document.documentElement.addEventListener('mouseleave', () => {
       mouse.active = false;
       bgParticles.forEach(p => { if (p.orbit && !p.dying) p.forceRelease(); });
     });
