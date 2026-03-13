@@ -378,14 +378,13 @@ document.addEventListener("click", (e) => {
 });
 
 // === ZOOM FOND D'ÉCRAN AU SCROLL ===
-// Intégré directement — pas de DOMContentLoaded séparé (script chargé après DOM)
 function initBgZoom() {
   const bg = document.getElementById("bg-image");
   if (!bg) return;
   const SCALE_MIN = 1.0;
   const SCALE_MAX = 1.18;
   function update() {
-    const scrollY   = window.scrollY || window.pageYOffset;
+    const scrollY   = window.scrollY || document.documentElement.scrollTop || 0;
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     if (maxScroll <= 0) { bg.style.transform = "scale(1)"; return; }
     const t = Math.min(scrollY / maxScroll, 1);
