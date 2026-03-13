@@ -17,8 +17,11 @@
 }
 
 /* FOND GLOBAL */
-html,body{
+html{
 height:100%;
+}
+body{
+min-height:100%;
 background: transparent;
 color: #e5e7eb;
 font-family: system-ui, -apple-system, sans-serif;
