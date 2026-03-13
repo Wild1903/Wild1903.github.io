@@ -568,6 +568,12 @@
 
     const bgParticles = Array.from({ length: COUNT }, (_, i) => new BgParticle(true));
 
+    // Souris hors de la page → désactiver l'attraction et libérer doucement les orbitales
+    document.addEventListener('mouseleave', () => {
+      mouse.active = false;
+      bgParticles.forEach(p => { if (p.orbit && !p.dying) p.forceRelease(); });
+    });
+
     // Spawn supplémentaires depuis les bords pour couvrir tout l'écran
     function spawnEdge() {
       // Trouver une particule libre (non orbitale, non dying) à réinitialiser depuis un bord
