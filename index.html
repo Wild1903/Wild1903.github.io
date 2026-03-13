@@ -470,46 +470,42 @@
 
         if (this.orbit) {
           this.orbitAngle += this.orbitSpeed;
-          // Suivi rapide de la souris (attraction forte)
-          this.cx += (mouse.x - this.cx) * 0.18;
-          this.cy += (mouse.y - this.cy) * 0.18;
+          this.cx += (mouse.x - this.cx) * 0.12;
+          this.cy += (mouse.y - this.cy) * 0.12;
           this.x = this.cx + Math.cos(this.orbitAngle) * this.orbitR;
-          this.y = this.cy + Math.sin(this.orbitAngle) * (this.orbitR * 0.52);
+          this.y = this.cy + Math.sin(this.orbitAngle) * this.orbitR; // cercle pur, pas d'ellipse
           this.fadeIn = Math.min(this.fadeIn + 0.05, 1);
           this.life++;
-          // Durée de vie orbitale naturelle : ne meurt QUE si remplacée
         } else {
-          const dx   = mouse.x - this.x;
-          const dy   = mouse.y - this.y;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          const captureR = 200;
-
-          if (dist < captureR && mouse.active) {
-            const currentOrbiters = bgParticles.filter(p => p.orbit && !p.dying).length;
-            if (currentOrbiters < MAX_ORB) {
-              // Capture → devient orbitale
-              this.orbit      = true;
-              this.orbitAngle = Math.atan2(this.y - mouse.y, this.x - mouse.x);
-              this.orbitR     = 40 + Math.random() * 56; // min 40px — ne touche jamais le curseur
-              this.orbitSpeed = -(0.020 + Math.random() * 0.020); // toujours négatif = sens anti-horaire
-              this.cx = mouse.x; this.cy = mouse.y;
-              this.life = 0; this.fadeIn = 0; this.fadeOut = 1;
-            } else {
-              // Attirée mais pas capturée — force d'attraction rapide
-              const force = (1 - dist / captureR) * 0.07;
-              this.vx += (dx / dist) * force * 3.0;
-              this.vy += (dy / dist) * force * 3.0;
-            }
-          } else {
-            // Dérive naturelle vers le haut — couvre tout l'écran
-            this.vy -= 0.005;
-          }
-
+          // Dérive naturelle vers le haut uniquement
+          this.vy -= 0.005;
           this.vx *= 0.96; this.vy *= 0.96;
           this.x += this.vx; this.y += this.vy;
           this.life++;
 
-          // Wrap sur X et Y pour couvrir tout l'écran en permanence
+          if (mouse.active) {
+            const dx   = mouse.x - this.x;
+            const dy   = mouse.y - this.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            const captureR = 80;
+
+            if (dist < captureR) {
+              const currentOrbiters = bgParticles.filter(p => p.orbit && !p.dying).length;
+              if (currentOrbiters < MAX_ORB) {
+                // Capture — rayon = distance actuelle, jamais moins de 44px
+                this.orbit      = true;
+                this.orbitAngle = Math.atan2(this.y - mouse.y, this.x - mouse.x);
+                this.orbitR     = Math.max(44, dist);
+                this.orbitSpeed = -(0.016 + Math.random() * 0.016); // anti-horaire
+                this.cx = mouse.x;
+                this.cy = mouse.y;
+                this.vx = 0; this.vy = 0; // stopper la vélocité immédiatement
+                this.life = 0; this.fadeIn = 0; this.fadeOut = 1;
+              }
+              // Si MAX_ORB atteint → rien, la particule continue sa dérive
+            }
+          }
+
           if (this.x < -20) this.x = W + 20;
           if (this.x > W + 20) this.x = -20;
           if (this.y < -40) this.reset(false);
